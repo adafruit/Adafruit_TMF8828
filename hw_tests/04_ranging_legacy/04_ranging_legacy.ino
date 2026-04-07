@@ -11,6 +11,7 @@
 
 #include <Adafruit_TMF8828.h>
 
+// Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
 #define EN_PIN -1
 
 Adafruit_TMF8828 tmf(EN_PIN);
@@ -148,6 +149,7 @@ void setup() {
 
   bool overall = true;
 
+  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("begin FAILED"));
   }

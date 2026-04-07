@@ -13,8 +13,10 @@
 #include <Adafruit_TMF8828.h>
 
 #ifdef ESP32
+// Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
 #define EN_PIN 27
 #else
+// Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
 #define EN_PIN A0
 #endif
 
@@ -29,6 +31,7 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 I2C Address Change"));
   Serial.println(F("Note: address changes are not permanent."));
 
+  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("TMF8828 not found at 0x41"));
   }
@@ -48,6 +51,7 @@ void setup() {
     halt(F("Failed to change address back"));
   }
 
+  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("Could not talk to device at 0x41"));
   }

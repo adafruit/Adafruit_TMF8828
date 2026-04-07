@@ -12,8 +12,10 @@
 #include <Adafruit_TMF8828.h>
 
 #ifdef ESP32
+// Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
 #define EN_PIN 27
 #else
+// Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
 #define EN_PIN A0
 #endif
 
@@ -67,6 +69,7 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 Power Modes Demo"));
   Serial.println(F("Ranging draws tens of mA; standby is low microamps."));
 
+  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("TMF8828 not found!"));
   }

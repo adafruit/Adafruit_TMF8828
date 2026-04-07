@@ -98,6 +98,7 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 ASCII Art Demo"));
   Serial.println(F("Starting sensor..."));
 
+  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("TMF8828 not found!"));
   }
