@@ -16,48 +16,6 @@ Adafruit_TMF8828 tmf;
 
 static tmf8828_result_t result;
 
-static bool waitForResult(uint32_t timeoutMs) {
-  uint32_t start = millis();
-  while ((millis() - start) < timeoutMs) {
-    if (tmf.dataReady()) {
-      if (tmf.getRangingData(&result)) {
-        return true;
-      }
-    }
-    delay(5);
-  }
-  return false;
-}
-
-static void printCell(uint16_t distance, uint8_t confidence) {
-  if (distance < 10) {
-    Serial.print(F("   "));
-  } else if (distance < 100) {
-    Serial.print(F("  "));
-  } else if (distance < 1000) {
-    Serial.print(F(" "));
-  }
-  Serial.print(distance);
-  Serial.print(F("/"));
-  if (confidence < 10) {
-    Serial.print(F("0"));
-  }
-  Serial.print(confidence);
-}
-
-static void printGrid(const tmf8828_result_t& data) {
-  for (uint8_t row = 0; row < 6; row++) {
-    for (uint8_t col = 0; col < 6; col++) {
-      uint8_t idx = row * 6 + col;
-      printCell(data.results[idx].distance, data.results[idx].confidence);
-      if (col < 5) {
-        Serial.print(F(" "));
-      }
-    }
-    Serial.println();
-  }
-}
-
 void setup() {
   Serial.begin(115200);
   while (!Serial) {
@@ -75,7 +33,9 @@ void setup() {
     halt(F("Failed to set 8x8 mode"));
   }
 
-  if (!tmf.configure(132, 250, 15)) {
+  // Args: period (ms), kilo-iterations (integration time), SPAD map (zone
+  // layout)
+  if (!tmf.configure(132, 250, TMF8828_SPAD_8X8)) {
     halt(F("Failed to configure sensor"));
   }
 
@@ -85,8 +45,11 @@ void setup() {
 }
 
 void loop() {
-  if (!waitForResult(5000)) {
-    Serial.println(F("Timeout waiting for data"));
+  // Wait for a ranging result to arrive
+  if (!tmf.dataReady()) {
+    return;
+  }
+  if (!tmf.getRangingData(&result)) {
     return;
   }
 
@@ -104,6 +67,23 @@ void loop() {
 
   printGrid(result);
 }
+
+// Print a 6x6 distance/confidence grid
+void printGrid(const tmf8828_result_t& data) {
+  char buf[12];
+  for (uint8_t row = 0; row < 6; row++) {
+    for (uint8_t col = 0; col < 6; col++) {
+      uint8_t idx = row * 6 + col;
+      snprintf(buf, sizeof(buf), "%4d/%02d", data.results[idx].distance,
+               data.results[idx].confidence);
+      Serial.print(buf);
+      if (col < 5)
+        Serial.print(F(" "));
+    }
+    Serial.println();
+  }
+}
+
 void halt(const __FlashStringHelper* msg) {
   Serial.println(msg);
   Serial.println(F("FAIL"));

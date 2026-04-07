@@ -31,6 +31,24 @@ typedef struct tmf8828_result_t {
   } results[36];
 } tmf8828_result_t;
 
+/** SPAD map IDs — select the zone layout for ranging. */
+typedef enum {
+  TMF8828_SPAD_3X3_NORMAL = 1,       ///< 3x3, 14x6, 29x29 deg
+  TMF8828_SPAD_3X3_MACRO_A = 2,      ///< 3x3, 14x9, 29x43.5 deg
+  TMF8828_SPAD_3X3_MACRO_B = 3,      ///< 3x3, 14x9, 29x43.5 deg
+  TMF8828_SPAD_4X4_MACRO_A = 4,      ///< 4x4 time-mux, 14x9, 29x43.5 deg
+  TMF8828_SPAD_4X4_MACRO_B = 5,      ///< 4x4 time-mux, 14x9, 29x43.5 deg
+  TMF8828_SPAD_3X3_WIDE = 6,         ///< 3x3, 18x10, 44x48 deg
+  TMF8828_SPAD_4X4_WIDE = 7,         ///< 4x4 time-mux, 18x10, 44x48 deg
+  TMF8828_SPAD_9ZONE_MACRO_A = 8,    ///< 9 zones, 14x9, 29x43.5 deg
+  TMF8828_SPAD_9ZONE_MACRO_B = 9,    ///< 9 zones, 14x9, 29x43.5 deg
+  TMF8828_SPAD_3X6_TIMEMUX = 10,     ///< 3x6 time-mux, 18x12, 29x57 deg
+  TMF8828_SPAD_3X3_CHECKER = 11,     ///< 3x3 checkerboard, 14x6, 29x29 deg
+  TMF8828_SPAD_3X3_CHECKER_REV = 12, ///< 3x3 reverse checker, 14x6, 29x29 deg
+  TMF8828_SPAD_4X4_NARROW = 13,      ///< 4x4 time-mux, 18x8, 29x39 deg
+  TMF8828_SPAD_8X8 = 15,             ///< 8x8 mode (TMF8828 only)
+} tmf8828_spad_map_t;
+
 class Adafruit_TMF8828 {
  public:
   Adafruit_TMF8828(int8_t enPin = -1);
@@ -44,7 +62,7 @@ class Adafruit_TMF8828 {
 
   // Configuration
   bool configure(uint16_t periodMs = 132, uint16_t kiloIterations = 250,
-                 uint8_t spadMapId = 15);
+                 uint8_t spadMapId = TMF8828_SPAD_8X8);
   bool setThresholds(uint16_t low, uint16_t high, uint8_t persistence = 0);
   bool setInterruptMask(uint32_t mask);
 
