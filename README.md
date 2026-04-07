@@ -1,4 +1,6 @@
-# Adafruit TMF8828 Library <!-- @cond -->
+# Adafruit TMF8828 Library
+
+<!-- @cond -->
 [![Arduino Library CI](https://github.com/adafruit/Adafruit_TMF8828/actions/workflows/ci.yml/badge.svg)](https://github.com/adafruit/Adafruit_TMF8828/actions/workflows/ci.yml)
 <!-- @endcond -->
 
