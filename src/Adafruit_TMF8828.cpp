@@ -195,25 +195,23 @@ bool Adafruit_TMF8828::readFrame(tmf8828_frame_t* frame) {
   // On first subcapture of a new frame, clear the accumulator
   if (_subcaptureMask == 0) {
     memset(&_frame, 0, sizeof(_frame));
-    _frameCnt = 0;
   }
 
-  // Each subcapture has 36 results. Every 9th (indices 0, 9, 18, 27) is a
-  // reference channel — skip those. The remaining 32 split into 16 zones for
-  // object 0 (first target) and 16 for object 1 (second target). We use
-  // object 0 (highest-confidence primary target). Across 4 subcaptures the
-  // 16 zones fill rows sequentially: sub 0 → rows 0-1, sub 1 → rows 2-3, etc.
+  // Each subcapture has 36 results in 4 groups of 9. The first entry of each
+  // group (indices 0, 9, 18, 27) is a reference channel. Stripping those gives
+  // 32 real zones: first 16 = object 0, second 16 = object 1. We use object 0.
+  // Each subcapture's 16 zones map to 2 rows based on subcapture number:
+  //   sub 0 → rows 0-1, sub 1 → rows 2-3, sub 2 → rows 4-5, sub 3 → rows 6-7
   uint8_t zoneIdx = 0;
+  uint8_t baseIdx = sub * 16; // starting position in the 64-zone grid
   for (uint8_t i = 0; i < 36; i++) {
     if ((i % 9) == 0) {
       continue; // skip reference channel
     }
-    // Only use the first 16 zones (object 0) per subcapture
     if (zoneIdx < 16) {
-      uint8_t gridIdx = _frameCnt;
+      uint8_t gridIdx = baseIdx + zoneIdx;
       _frame.distances[gridIdx / 8][gridIdx % 8] = res.results[i].distance;
       _frame.confidences[gridIdx / 8][gridIdx % 8] = res.results[i].confidence;
-      _frameCnt++;
     }
     zoneIdx++;
   }
