@@ -12,47 +12,23 @@
 
 #include <Adafruit_TMF8828.h>
 
-Adafruit_TMF8828 tmf;
+#define TMF8828_EN_PIN 3 // GPIO pin connected to TMF8828 EN, or -1 to skip
 
-tmf8828_result_t result;
+Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
+
+static tmf8828_frame_t frame;
 
 // Paul Bourke density ramp
 const char densityRamp[] =
     " .'`^\",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
 const uint8_t rampLength = sizeof(densityRamp) - 1;
-const uint16_t minDist = 200;  // mm (closest)
-const uint16_t maxDist = 2000; // mm (farthest)
-
-uint16_t combinedDistance[64];
-uint8_t combinedConfidence[64];
-bool combinedValid[64];
-bool seenSubcapture[4];
-
-static void resetCombined() {
-  for (uint8_t i = 0; i < 64; i++) {
-    combinedDistance[i] = 0;
-    combinedConfidence[i] = 0;
-    combinedValid[i] = false;
-  }
-  for (uint8_t i = 0; i < 4; i++) {
-    seenSubcapture[i] = false;
-  }
-}
-
-static bool waitForResult(uint32_t timeoutMs) {
-  uint32_t start = millis();
-  while ((millis() - start) < timeoutMs) {
-    if (tmf.dataReady()) {
-      if (tmf.getRangingData(&result)) {
-        return true;
-      }
-    }
-    delay(5);
-  }
-  return false;
-}
+const uint16_t minDist = 200;  // mm (closest = dense)
+const uint16_t maxDist = 2000; // mm (farthest = sparse)
 
 static char distanceToChar(uint16_t distance) {
+  if (distance == 0) {
+    return ' ';
+  }
   if (distance <= minDist) {
     return densityRamp[rampLength - 1];
   }
@@ -64,31 +40,6 @@ static char distanceToChar(uint16_t distance) {
   return densityRamp[idx];
 }
 
-static void updateCombined(uint8_t subcapture, const tmf8828_result_t& data) {
-  const uint8_t rowOffset[4] = {0, 0, 2, 2};
-  const uint8_t colOffset[4] = {0, 2, 0, 2};
-  uint8_t ro = rowOffset[subcapture & 0x03];
-  uint8_t co = colOffset[subcapture & 0x03];
-
-  for (uint8_t row = 0; row < 6; row++) {
-    for (uint8_t col = 0; col < 6; col++) {
-      uint8_t r = row + ro;
-      uint8_t c = col + co;
-      if (r >= 8 || c >= 8) {
-        continue;
-      }
-      uint8_t idx6 = row * 6 + col;
-      uint8_t idx8 = r * 8 + c;
-      uint8_t conf = data.results[idx6].confidence;
-      if (!combinedValid[idx8] || conf > combinedConfidence[idx8]) {
-        combinedValid[idx8] = true;
-        combinedConfidence[idx8] = conf;
-        combinedDistance[idx8] = data.results[idx6].distance;
-      }
-    }
-  }
-}
-
 void setup() {
   Serial.begin(115200);
   while (!Serial) {
@@ -98,7 +49,6 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 ASCII Art Demo"));
   Serial.println(F("Starting sensor..."));
 
-  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("TMF8828 not found!"));
   }
@@ -107,7 +57,7 @@ void setup() {
     halt(F("Failed to set 8x8 mode"));
   }
 
-  if (!tmf.configure(132, 250, 15)) {
+  if (!tmf.configure(132, 250, TMF8828_SPAD_8X8)) {
     halt(F("Failed to configure sensor"));
   }
 
@@ -117,45 +67,35 @@ void setup() {
 
   Serial.println(F("Starting ASCII art display..."));
   delay(200);
+  // Clear screen and hide cursor
   Serial.print(F("\033[2J\033[?25l"));
-
-  resetCombined();
 }
 
 void loop() {
-  if (!waitForResult(5000)) {
+  if (!tmf.readFrame(&frame)) {
     return;
   }
 
-  uint8_t subcapture = result.resultNumber & 0x03;
-  seenSubcapture[subcapture] = true;
-  updateCombined(subcapture, result);
-
-  bool haveAll = seenSubcapture[0] && seenSubcapture[1] && seenSubcapture[2] &&
-                 seenSubcapture[3];
-  if (!haveAll) {
-    return;
-  }
-
+  // ANSI: cursor home
   Serial.print(F("\033[H"));
-  Serial.println(F("TMF8828 8x8 ASCII Art"));
-  Serial.println(F("===================="));
+  Serial.print(F("TMF8828 8x8 ASCII Art  Temp="));
+  Serial.print(frame.temperature);
+  Serial.println(F("C"));
+  Serial.println(F("=========================="));
 
-  for (uint8_t row = 0; row < 8; row++) {
-    for (uint8_t col = 0; col < 8; col++) {
-      uint8_t idx = row * 8 + col;
-      char c = combinedValid[idx] ? distanceToChar(combinedDistance[idx]) : '?';
-      Serial.print(c);
-      if (col < 7) {
+  // Rotated 90° CCW to match physical sensor orientation
+  for (uint8_t col = 7; col < 8; col--) { // unsigned wraps to 255
+    for (uint8_t row = 0; row < 8; row++) {
+      Serial.print(distanceToChar(frame.distances[row][col]));
+      if (row < 7) {
         Serial.print(F(" "));
       }
     }
     Serial.println();
   }
   Serial.println();
-
-  resetCombined();
 }
+
 void halt(const __FlashStringHelper* msg) {
   Serial.println(msg);
   Serial.println(F("FAIL"));

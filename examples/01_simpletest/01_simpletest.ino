@@ -52,7 +52,9 @@ void loop() {
     return;
   }
 
-  Serial.println();
+  // ANSI: cursor home + clear screen for stable display
+  Serial.print(F("\033[H\033[2J"));
+
   Serial.print(F("Temp="));
   Serial.print(frame.temperature);
   Serial.println(F("C"));
