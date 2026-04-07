@@ -2,7 +2,9 @@
  * @file 01_simpletest.ino
  *
  * Simple test for Adafruit TMF8828 8x8 Time-of-Flight sensor.
- * Prints a 6x6 distance/confidence grid for each subcapture.
+ * In 8x8 mode the sensor time-multiplexes 4 subcaptures, each returning
+ * up to 36 zone results. This example uses readFrame() to accumulate all
+ * 4 subcaptures and prints the distance and confidence grids.
  *
  * Written by Limor 'ladyada' Fried with assistance from Claude Code
  * Copyright 2026 Adafruit Industries
@@ -14,7 +16,7 @@
 
 Adafruit_TMF8828 tmf;
 
-static tmf8828_result_t result;
+static tmf8828_frame_t frame;
 
 void setup() {
   Serial.begin(115200);
@@ -24,7 +26,7 @@ void setup() {
 
   Serial.println(F("Adafruit TMF8828 Simple Test"));
 
-  // Args: I2C address, Wire bus, I2C speed (Hz)
+  // Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("TMF8828 not found!"));
   }
@@ -33,8 +35,7 @@ void setup() {
     halt(F("Failed to set 8x8 mode"));
   }
 
-  // Args: period (ms), kilo-iterations (integration time), SPAD map (zone
-  // layout)
+  // Args: period (ms), kilo-iterations (integration time), SPAD map
   if (!tmf.configure(132, 250, TMF8828_SPAD_8X8)) {
     halt(F("Failed to configure sensor"));
   }
@@ -45,30 +46,32 @@ void setup() {
 }
 
 void loop() {
-  // Wait for a ranging result to arrive
-  if (!tmf.dataReady()) {
-    return;
-  }
-  if (!tmf.getRangingData(&result)) {
+  // readFrame() returns true once all 4 subcaptures are collected
+  if (!tmf.readFrame(&frame)) {
     return;
   }
 
   Serial.println();
-  Serial.print(F("ResultNumber="));
-  Serial.print(result.resultNumber);
-  Serial.print(F(" Temp="));
-  Serial.print(result.temperature);
-  Serial.print(F(" ValidResults="));
-  Serial.println(result.validResults);
+  Serial.print(F("Temp="));
+  Serial.print(frame.temperature);
+  Serial.println(F("C"));
 
-  uint8_t subcapture = result.resultNumber & 0x03;
-  Serial.print(F("Subcapture "));
-  Serial.println(subcapture);
+  Serial.println(F("Distance (mm):"));
+  for (uint8_t s = 0; s < 4; s++) {
+    Serial.print(F("  Sub "));
+    Serial.println(s);
+    printGrid16(frame.distances[s]);
+  }
 
-  printGrid(result);
+  Serial.println(F("Confidence:"));
+  for (uint8_t s = 0; s < 4; s++) {
+    Serial.print(F("  Sub "));
+    Serial.println(s);
+    printGrid8(frame.confidences[s]);
+  }
 }
 
-// Print a right-justified number padded to width
+// Print right-justified number padded to width
 void printPadded(uint16_t val, uint8_t width) {
   uint16_t tmp = val;
   uint8_t digits = 1;
@@ -83,14 +86,25 @@ void printPadded(uint16_t val, uint8_t width) {
   Serial.print(val);
 }
 
-// Print a 6x6 distance/confidence grid
-void printGrid(const tmf8828_result_t& data) {
+// Print a 6x6 grid of uint16_t values
+void printGrid16(const uint16_t* data) {
   for (uint8_t row = 0; row < 6; row++) {
+    Serial.print(F("    "));
     for (uint8_t col = 0; col < 6; col++) {
-      uint8_t idx = row * 6 + col;
-      printPadded(data.results[idx].distance, 4);
-      Serial.print(F("/"));
-      printPadded(data.results[idx].confidence, 2);
+      printPadded(data[row * 6 + col], 5);
+      if (col < 5)
+        Serial.print(F(" "));
+    }
+    Serial.println();
+  }
+}
+
+// Print a 6x6 grid of uint8_t values
+void printGrid8(const uint8_t* data) {
+  for (uint8_t row = 0; row < 6; row++) {
+    Serial.print(F("    "));
+    for (uint8_t col = 0; col < 6; col++) {
+      printPadded(data[row * 6 + col], 3);
       if (col < 5)
         Serial.print(F(" "));
     }

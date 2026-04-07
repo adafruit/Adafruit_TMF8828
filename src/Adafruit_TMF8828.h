@@ -18,7 +18,7 @@
 #include "tmf8828.h"
 
 /**
- * @brief Parsed TMF8828 measurement results.
+ * @brief Parsed TMF8828 measurement results for a single subcapture (36 zones).
  */
 typedef struct tmf8828_result_t {
   uint8_t resultNumber;
@@ -30,6 +30,19 @@ typedef struct tmf8828_result_t {
     uint16_t distance; // mm
   } results[36];
 } tmf8828_result_t;
+
+/**
+ * @brief Complete 8x8 frame accumulated from 4 subcaptures.
+ *
+ * In 8x8 mode the sensor time-multiplexes 4 subcaptures, each with up to
+ * 36 zone results. This struct holds all 4 subcaptures once a complete
+ * frame has been collected.
+ */
+typedef struct tmf8828_frame_t {
+  uint8_t temperature;        ///< Temperature from last subcapture
+  uint16_t distances[4][36];  ///< Distance (mm) per subcapture/zone
+  uint8_t confidences[4][36]; ///< Confidence per subcapture/zone
+} tmf8828_frame_t;
 
 /** SPAD map IDs — select the zone layout for ranging. */
 typedef enum {
@@ -71,6 +84,9 @@ class Adafruit_TMF8828 {
   bool stopRanging();
   bool dataReady();
   bool getRangingData(tmf8828_result_t* result);
+
+  // 8x8 frame accumulation — collects 4 subcaptures into one frame
+  bool readFrame(tmf8828_frame_t* frame);
 
   // Calibration
   bool factoryCalibration();
@@ -117,6 +133,10 @@ class Adafruit_TMF8828 {
   uint8_t _persistence;
   uint32_t _intMask;
   uint8_t _dumpHistogram;
+
+  // 8x8 frame accumulation state
+  tmf8828_frame_t _frame;
+  uint8_t _subcaptureMask; // bits 0-3 track which subcaptures received
 };
 
 #endif

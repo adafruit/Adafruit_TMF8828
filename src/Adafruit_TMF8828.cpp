@@ -73,6 +73,7 @@ bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire, uint32_t i2cSpeed) {
   }
 
   _is8x8 = true;
+  _subcaptureMask = 0;
   tmf8828_last_result_valid = false;
   return true;
 }
@@ -171,6 +172,40 @@ bool Adafruit_TMF8828::getRangingData(tmf8828_result_t* result) {
 
   memcpy(result, &tmf8828_last_result, sizeof(tmf8828_result_t));
   tmf8828_last_result_valid = false;
+  return true;
+}
+
+bool Adafruit_TMF8828::readFrame(tmf8828_frame_t* frame) {
+  if (!frame) {
+    return false;
+  }
+
+  // Poll for data
+  if (!dataReady()) {
+    return false;
+  }
+
+  tmf8828_result_t res;
+  if (!getRangingData(&res)) {
+    return false;
+  }
+
+  // Store this subcapture
+  uint8_t sub = res.resultNumber & 0x03;
+  for (uint8_t i = 0; i < 36; i++) {
+    _frame.distances[sub][i] = res.results[i].distance;
+    _frame.confidences[sub][i] = res.results[i].confidence;
+  }
+  _frame.temperature = res.temperature;
+  _subcaptureMask |= (1 << sub);
+
+  // Return true only when all 4 subcaptures are collected
+  if (_subcaptureMask != 0x0F) {
+    return false;
+  }
+
+  memcpy(frame, &_frame, sizeof(tmf8828_frame_t));
+  _subcaptureMask = 0;
   return true;
 }
 
