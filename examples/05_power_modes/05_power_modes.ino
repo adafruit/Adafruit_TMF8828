@@ -11,15 +11,9 @@
 
 #include <Adafruit_TMF8828.h>
 
-#ifdef ESP32
-// Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
-#define EN_PIN 27
-#else
-// Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
-#define EN_PIN A0
-#endif
+#define TMF8828_EN_PIN 3 // GPIO pin connected to TMF8828 EN, or -1 to skip
 
-Adafruit_TMF8828 tmf(EN_PIN);
+Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
 tmf8828_result_t result;
 

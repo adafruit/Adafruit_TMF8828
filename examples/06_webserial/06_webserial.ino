@@ -26,7 +26,9 @@
 
 #include <Adafruit_TMF8828.h>
 
-Adafruit_TMF8828 tmf;
+#define TMF8828_EN_PIN 3 // GPIO pin connected to TMF8828 EN, or -1 to skip
+
+Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
 tmf8828_result_t result;
 
