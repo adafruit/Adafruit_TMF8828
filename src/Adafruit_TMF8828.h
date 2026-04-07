@@ -32,16 +32,17 @@ typedef struct tmf8828_result_t {
 } tmf8828_result_t;
 
 /**
- * @brief Complete 8x8 frame accumulated from 4 subcaptures.
+ * @brief Complete 8x8 frame assembled from 4 subcaptures.
  *
- * In 8x8 mode the sensor time-multiplexes 4 subcaptures, each with up to
- * 36 zone results. This struct holds all 4 subcaptures once a complete
- * frame has been collected.
+ * Each subcapture returns 36 results but every 9th is a reference channel.
+ * Stripping those gives 32 real zones per subcapture (16 per object). Across
+ * 4 subcaptures that yields 64 zones = 8x8 grid. readFrame() assembles the
+ * full grid automatically.
  */
 typedef struct tmf8828_frame_t {
-  uint8_t temperature;        ///< Temperature from last subcapture
-  uint16_t distances[4][36];  ///< Distance (mm) per subcapture/zone
-  uint8_t confidences[4][36]; ///< Confidence per subcapture/zone
+  uint8_t temperature;       ///< Temperature (C) from last subcapture
+  uint16_t distances[8][8];  ///< Distance (mm), 8x8 row-major
+  uint8_t confidences[8][8]; ///< Confidence, 8x8 row-major
 } tmf8828_frame_t;
 
 /** SPAD map IDs — select the zone layout for ranging. */
@@ -137,6 +138,7 @@ class Adafruit_TMF8828 {
   // 8x8 frame accumulation state
   tmf8828_frame_t _frame;
   uint8_t _subcaptureMask; // bits 0-3 track which subcaptures received
+  uint8_t _frameCnt;       // zones filled so far (0-64)
 };
 
 #endif

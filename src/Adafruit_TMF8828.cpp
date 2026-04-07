@@ -190,11 +190,32 @@ bool Adafruit_TMF8828::readFrame(tmf8828_frame_t* frame) {
     return false;
   }
 
-  // Store this subcapture
   uint8_t sub = res.resultNumber & 0x03;
+
+  // On first subcapture of a new frame, clear the accumulator
+  if (_subcaptureMask == 0) {
+    memset(&_frame, 0, sizeof(_frame));
+    _frameCnt = 0;
+  }
+
+  // Each subcapture has 36 results. Every 9th (indices 0, 9, 18, 27) is a
+  // reference channel — skip those. The remaining 32 split into 16 zones for
+  // object 0 (first target) and 16 for object 1 (second target). We use
+  // object 0 (highest-confidence primary target). Across 4 subcaptures the
+  // 16 zones fill rows sequentially: sub 0 → rows 0-1, sub 1 → rows 2-3, etc.
+  uint8_t zoneIdx = 0;
   for (uint8_t i = 0; i < 36; i++) {
-    _frame.distances[sub][i] = res.results[i].distance;
-    _frame.confidences[sub][i] = res.results[i].confidence;
+    if ((i % 9) == 0) {
+      continue; // skip reference channel
+    }
+    // Only use the first 16 zones (object 0) per subcapture
+    if (zoneIdx < 16) {
+      uint8_t gridIdx = _frameCnt;
+      _frame.distances[gridIdx / 8][gridIdx % 8] = res.results[i].distance;
+      _frame.confidences[gridIdx / 8][gridIdx % 8] = res.results[i].confidence;
+      _frameCnt++;
+    }
+    zoneIdx++;
   }
   _frame.temperature = res.temperature;
   _subcaptureMask |= (1 << sub);

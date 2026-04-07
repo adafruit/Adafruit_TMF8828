@@ -1,10 +1,8 @@
 /*!
  * @file 01_simpletest.ino
  *
- * Simple test for Adafruit TMF8828 8x8 Time-of-Flight sensor.
- * In 8x8 mode the sensor time-multiplexes 4 subcaptures, each returning
- * up to 36 zone results. This example uses readFrame() to accumulate all
- * 4 subcaptures and prints the distance and confidence grids.
+ * Simple test for Adafruit TMF8828 Time-of-Flight sensor.
+ * Prints a complete 8x8 distance and confidence grid.
  *
  * Written by Limor 'ladyada' Fried with assistance from Claude Code
  * Copyright 2026 Adafruit Industries
@@ -46,7 +44,8 @@ void setup() {
 }
 
 void loop() {
-  // readFrame() returns true once all 4 subcaptures are collected
+  // readFrame() collects all 4 subcaptures and assembles a true 8x8 grid.
+  // Returns true when a complete frame is ready.
   if (!tmf.readFrame(&frame)) {
     return;
   }
@@ -57,17 +56,25 @@ void loop() {
   Serial.println(F("C"));
 
   Serial.println(F("Distance (mm):"));
-  for (uint8_t s = 0; s < 4; s++) {
-    Serial.print(F("  Sub "));
-    Serial.println(s);
-    printGrid16(frame.distances[s]);
+  for (uint8_t row = 0; row < 8; row++) {
+    Serial.print(F("  "));
+    for (uint8_t col = 0; col < 8; col++) {
+      printPadded(frame.distances[row][col], 5);
+      if (col < 7)
+        Serial.print(F(" "));
+    }
+    Serial.println();
   }
 
   Serial.println(F("Confidence:"));
-  for (uint8_t s = 0; s < 4; s++) {
-    Serial.print(F("  Sub "));
-    Serial.println(s);
-    printGrid8(frame.confidences[s]);
+  for (uint8_t row = 0; row < 8; row++) {
+    Serial.print(F("  "));
+    for (uint8_t col = 0; col < 8; col++) {
+      printPadded(frame.confidences[row][col], 3);
+      if (col < 7)
+        Serial.print(F(" "));
+    }
+    Serial.println();
   }
 }
 
@@ -84,32 +91,6 @@ void printPadded(uint16_t val, uint8_t width) {
     digits++;
   }
   Serial.print(val);
-}
-
-// Print a 6x6 grid of uint16_t values
-void printGrid16(const uint16_t* data) {
-  for (uint8_t row = 0; row < 6; row++) {
-    Serial.print(F("    "));
-    for (uint8_t col = 0; col < 6; col++) {
-      printPadded(data[row * 6 + col], 5);
-      if (col < 5)
-        Serial.print(F(" "));
-    }
-    Serial.println();
-  }
-}
-
-// Print a 6x6 grid of uint8_t values
-void printGrid8(const uint8_t* data) {
-  for (uint8_t row = 0; row < 6; row++) {
-    Serial.print(F("    "));
-    for (uint8_t col = 0; col < 6; col++) {
-      printPadded(data[row * 6 + col], 3);
-      if (col < 5)
-        Serial.print(F(" "));
-    }
-    Serial.println();
-  }
 }
 
 void halt(const __FlashStringHelper* msg) {
