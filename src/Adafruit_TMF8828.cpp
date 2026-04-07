@@ -200,16 +200,22 @@ bool Adafruit_TMF8828::readFrame(tmf8828_frame_t* frame) {
   // Each subcapture has 36 results in 4 groups of 9. The first entry of each
   // group (indices 0, 9, 18, 27) is a reference channel. Stripping those gives
   // 32 real zones: first 16 = object 0, second 16 = object 1. We use object 0.
-  // Each subcapture's 16 zones map to 2 rows based on subcapture number:
-  //   sub 0 → rows 0-1, sub 1 → rows 2-3, sub 2 → rows 4-5, sub 3 → rows 6-7
+  // The 16 zones per subcapture map to specific 8x8 positions via a
+  // checkerboard-like interleave (from ams-OSRAM TMF8828 zone mapping).
+  static const uint8_t PROGMEM zoneMap[4][16] = {
+      {8, 9, 12, 13, 24, 25, 28, 29, 40, 41, 44, 45, 56, 57, 60, 61},
+      {10, 11, 14, 15, 26, 27, 30, 31, 42, 43, 46, 47, 58, 59, 62, 63},
+      {0, 1, 4, 5, 16, 17, 20, 21, 32, 33, 36, 37, 48, 49, 52, 53},
+      {2, 3, 6, 7, 18, 19, 22, 23, 34, 35, 38, 39, 50, 51, 54, 55},
+  };
+
   uint8_t zoneIdx = 0;
-  uint8_t baseIdx = sub * 16; // starting position in the 64-zone grid
   for (uint8_t i = 0; i < 36; i++) {
     if ((i % 9) == 0) {
       continue; // skip reference channel
     }
     if (zoneIdx < 16) {
-      uint8_t gridIdx = baseIdx + zoneIdx;
+      uint8_t gridIdx = pgm_read_byte(&zoneMap[sub][zoneIdx]);
       _frame.distances[gridIdx / 8][gridIdx % 8] = res.results[i].distance;
       _frame.confidences[gridIdx / 8][gridIdx % 8] = res.results[i].confidence;
     }
