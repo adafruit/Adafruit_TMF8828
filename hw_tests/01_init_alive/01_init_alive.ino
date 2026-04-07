@@ -24,19 +24,11 @@ void setup() {
   Serial.println(F("TMF8828 Init Test"));
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("Failed to find TMF8828"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to find TMF8828"));
   }
 
   if (!tmf.readDeviceInfo()) {
-    Serial.println(F("Failed to read device info"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to read device info"));
   }
 
   Serial.print(F("FW: "));
@@ -52,11 +44,18 @@ void setup() {
   Serial.println(tmf.getSerialNumber());
 
   if (tmf.getSerialNumber() == 0) {
-    Serial.println(F("Serial number missing"));
-    Serial.println(F("FAIL"));
+    halt(F("Serial number missing"));
   } else {
     Serial.println(F("PASS"));
   }
 }
 
 void loop() {}
+
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
+}

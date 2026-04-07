@@ -149,20 +149,12 @@ void setup() {
   bool overall = true;
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("begin FAILED"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("begin FAILED"));
   }
   Serial.println(F("begin PASS"));
 
   if (!tmf.setModeLegacy()) {
-    Serial.println(F("setModeLegacy FAILED"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("setModeLegacy FAILED"));
   }
   Serial.println(F("setModeLegacy PASS"));
 
@@ -199,3 +191,11 @@ void setup() {
 }
 
 void loop() {}
+
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
+}

@@ -185,20 +185,12 @@ void setup() {
   bool overall = true;
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("begin FAILED"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("begin FAILED"));
   }
   Serial.println(F("begin PASS"));
 
   if (!tmf.setMode8x8()) {
-    Serial.println(F("setMode8x8 FAILED"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("setMode8x8 FAILED"));
   }
   Serial.println(F("setMode8x8 PASS"));
 
@@ -277,3 +269,11 @@ void setup() {
 }
 
 void loop() {}
+
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
+}

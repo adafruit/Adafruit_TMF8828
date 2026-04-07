@@ -99,31 +99,19 @@ void setup() {
   Serial.println(F("Starting sensor..."));
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("TMF8828 not found!"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("TMF8828 not found!"));
   }
 
   if (!tmf.setMode8x8()) {
-    Serial.println(F("Failed to set 8x8 mode"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to set 8x8 mode"));
   }
 
   if (!tmf.configure(132, 250, 15)) {
-    Serial.println(F("Failed to configure sensor"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to configure sensor"));
   }
 
   if (!tmf.startRanging()) {
-    Serial.println(F("Failed to start ranging"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to start ranging"));
   }
 
   Serial.println(F("Starting ASCII art display..."));
@@ -166,4 +154,11 @@ void loop() {
   Serial.println();
 
   resetCombined();
+}
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
 }

@@ -30,41 +30,26 @@ void setup() {
   Serial.println(F("Note: address changes are not permanent."));
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("TMF8828 not found at 0x41"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("TMF8828 not found at 0x41"));
   }
 
   Serial.println(F("Changing address to 0x42..."));
   if (!tmf.changeI2CAddress(0x42)) {
-    Serial.println(F("Failed to change address"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to change address"));
   }
 
   if (!tmf.begin(0x42, &Wire, 400000)) {
-    Serial.println(F("Could not talk to device at 0x42"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Could not talk to device at 0x42"));
   }
   Serial.println(F("Verified address 0x42"));
 
   Serial.println(F("Changing address back to 0x41..."));
   if (!tmf.changeI2CAddress(0x41)) {
-    Serial.println(F("Failed to change address back"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to change address back"));
   }
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("Could not talk to device at 0x41"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Could not talk to device at 0x41"));
   }
   Serial.println(F("Verified address 0x41"));
   Serial.println(F("Done! Power cycle to reset the address."));
@@ -72,4 +57,11 @@ void setup() {
 
 void loop() {
   delay(1000);
+}
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
 }

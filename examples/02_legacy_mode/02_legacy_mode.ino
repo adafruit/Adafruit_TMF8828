@@ -54,31 +54,19 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 Legacy 3x3 Test"));
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("TMF8828 not found!"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("TMF8828 not found!"));
   }
 
   if (!tmf.setModeLegacy()) {
-    Serial.println(F("Failed to set legacy mode"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to set legacy mode"));
   }
 
   if (!tmf.configure(132, 250, 6)) {
-    Serial.println(F("Failed to configure legacy mode"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to configure legacy mode"));
   }
 
   if (!tmf.startRanging()) {
-    Serial.println(F("Failed to start ranging"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to start ranging"));
   }
 }
 
@@ -95,4 +83,11 @@ void loop() {
   Serial.println(result.temperature);
 
   printGrid3x3(result);
+}
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
 }

@@ -68,49 +68,33 @@ void setup() {
   Serial.println(F("Ranging draws tens of mA; standby is low microamps."));
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("TMF8828 not found!"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("TMF8828 not found!"));
   }
 
   if (!tmf.setMode8x8()) {
-    Serial.println(F("Failed to set 8x8 mode"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("Failed to set 8x8 mode"));
   }
 
   Serial.println(F("Ranging for a few seconds..."));
   if (!doRangingCycle(3000)) {
-    while (1) {
-      delay(10);
-    }
+    halt(F("Ranging cycle FAILED"));
   }
 
   Serial.println(F("Entering standby (expect very low current)..."));
   if (!tmf.standby()) {
-    Serial.println(F("standby FAILED"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("standby FAILED"));
   }
 
   delay(2000);
 
   Serial.println(F("Waking up (expect ranging current again)..."));
   if (!tmf.wakeup()) {
-    Serial.println(F("wakeup FAILED"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("wakeup FAILED"));
   }
 
   Serial.println(F("Ranging after wakeup..."));
   if (!doRangingCycle(3000)) {
-    while (1) {
-      delay(10);
-    }
+    halt(F("Ranging cycle FAILED"));
   }
 
   Serial.println(F("Done with power mode demo."));
@@ -118,4 +102,11 @@ void setup() {
 
 void loop() {
   delay(1000);
+}
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
 }

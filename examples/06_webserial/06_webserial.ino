@@ -38,13 +38,6 @@ uint16_t currentKiter = 250;
 const uint8_t legacySpadMap = 6;
 const uint8_t mode8x8SpadMap = 15;
 
-static void halt(const __FlashStringHelper* msg) {
-  Serial.println(msg);
-  while (1) {
-    delay(10);
-  }
-}
-
 static bool applyConfig(void) {
   if (!tmf.stopRanging()) {
     return false;
@@ -212,4 +205,11 @@ void outputFrame(void) {
   Serial.println();
 
   Serial.println(F("FRAME_END"));
+}
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
 }

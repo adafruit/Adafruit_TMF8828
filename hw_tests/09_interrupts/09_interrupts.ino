@@ -60,20 +60,12 @@ void setup() {
   Serial.println(F(""));
   Serial.println(F("Step 1: begin + setMode8x8"));
   if (!tmf.begin(0x41, &Wire, 400000)) {
-    Serial.println(F("begin FAILED"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("begin FAILED"));
   }
   Serial.println(F("begin PASS"));
 
   if (!tmf.setMode8x8()) {
-    Serial.println(F("setMode8x8 FAILED"));
-    Serial.println(F("FAIL"));
-    while (1) {
-      delay(10);
-    }
+    halt(F("setMode8x8 FAILED"));
   }
   Serial.println(F("setMode8x8 PASS"));
   Serial.println(F("PASS"));
@@ -98,8 +90,7 @@ void setup() {
   bool step3Ok = true;
   tmf.clearAndEnableInterrupts(TMF8828_APP_I2C_RESULT_IRQ_MASK);
   if (!tmf.configure(132, 250, 15)) {
-    Serial.println(F("configure FAILED"));
-    Serial.println(F("FAIL"));
+    halt(F("configure FAILED"));
     overall = false;
     step3Ok = false;
   } else {
@@ -225,3 +216,11 @@ void setup() {
 }
 
 void loop() {}
+
+void halt(const __FlashStringHelper* msg) {
+  Serial.println(msg);
+  Serial.println(F("FAIL"));
+  while (1) {
+    delay(10);
+  }
+}
