@@ -12,9 +12,8 @@
 #include <Adafruit_TMF8828.h>
 
 #define EN_PIN 27
-#define INT_PIN 14
 
-Adafruit_TMF8828 tmf(EN_PIN, INT_PIN);
+Adafruit_TMF8828 tmf(EN_PIN);
 
 void setup() {
   Serial.begin(115200);

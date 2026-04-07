@@ -17,11 +17,10 @@
 #include "tmf8828_shim.h"
 #include "tmf882x_image.h"
 
-Adafruit_TMF8828::Adafruit_TMF8828(int8_t enPin, int8_t intPin)
+Adafruit_TMF8828::Adafruit_TMF8828(int8_t enPin)
     : _i2c(nullptr),
       _wire(&Wire),
       _enPin(enPin),
-      _intPin(intPin),
       _is8x8(true),
       _periodMs(132),
       _kiloIterations(250),
@@ -49,7 +48,6 @@ bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire) {
 
   tmf8828_i2c_device = _i2c;
   tmf8828_enable_pin = _enPin;
-  tmf8828_interrupt_pin = _intPin;
   configurePins(nullptr);
 
   tmf8828Initialise(&driver);

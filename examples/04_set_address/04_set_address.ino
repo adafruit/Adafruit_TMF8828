@@ -14,13 +14,11 @@
 
 #ifdef ESP32
 #define EN_PIN 27
-#define INT_PIN 14
 #else
 #define EN_PIN A0
-#define INT_PIN A1
 #endif
 
-Adafruit_TMF8828 tmf(EN_PIN, INT_PIN);
+Adafruit_TMF8828 tmf(EN_PIN);
 
 void setup() {
   Serial.begin(115200);

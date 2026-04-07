@@ -33,7 +33,7 @@ typedef struct tmf8828_result_t {
 
 class Adafruit_TMF8828 {
  public:
-  Adafruit_TMF8828(int8_t enPin = -1, int8_t intPin = -1);
+  Adafruit_TMF8828(int8_t enPin = -1);
   bool begin(uint8_t addr = 0x41, TwoWire* wire = &Wire);
 
   // Mode
@@ -87,7 +87,6 @@ class Adafruit_TMF8828 {
   Adafruit_I2CDevice* _i2c;
   TwoWire* _wire;
   int8_t _enPin;
-  int8_t _intPin;
   bool _is8x8;
 
   uint16_t _periodMs;

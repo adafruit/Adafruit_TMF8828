@@ -13,9 +13,8 @@
 #include <Wire.h>
 
 #define EN_PIN 27
-#define INT_PIN 14
 
-Adafruit_TMF8828 tmf(EN_PIN, INT_PIN);
+Adafruit_TMF8828 tmf(EN_PIN);
 
 tmf8828_result_t result;
 

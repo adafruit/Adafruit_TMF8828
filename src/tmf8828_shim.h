@@ -102,7 +102,6 @@ void printHistogram(void* dptr, uint8_t* data, uint8_t len);
 class Adafruit_I2CDevice;
 extern Adafruit_I2CDevice* tmf8828_i2c_device;
 extern int8_t tmf8828_enable_pin;
-extern int8_t tmf8828_interrupt_pin;
 
 struct tmf8828_result_t;
 extern struct tmf8828_result_t tmf8828_last_result;

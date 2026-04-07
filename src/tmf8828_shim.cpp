@@ -18,7 +18,6 @@
 
 Adafruit_I2CDevice* tmf8828_i2c_device = nullptr;
 int8_t tmf8828_enable_pin = -1;
-int8_t tmf8828_interrupt_pin = -1;
 
 struct tmf8828_result_t tmf8828_last_result = {};
 volatile bool tmf8828_last_result_valid = false;
@@ -57,9 +56,6 @@ void configurePins(void* dptr) {
   (void)dptr;
   if (tmf8828_enable_pin >= 0) {
     pinOutput((uint8_t)tmf8828_enable_pin);
-  }
-  if (tmf8828_interrupt_pin >= 0) {
-    pinInput((uint8_t)tmf8828_interrupt_pin);
   }
 }
 
@@ -132,16 +128,13 @@ void pinInput(uint8_t pin) {
 }
 
 void setInterruptHandler(void (*handler)(void)) {
-  if (tmf8828_interrupt_pin >= 0) {
-    attachInterrupt(digitalPinToInterrupt(tmf8828_interrupt_pin), handler,
-                    FALLING);
-  }
+  (void)handler;
+  // No-op: interrupt pin not managed by library.
+  // Users can call attachInterrupt() directly on their INT pin.
 }
 
 void clrInterruptHandler(void) {
-  if (tmf8828_interrupt_pin >= 0) {
-    detachInterrupt(digitalPinToInterrupt(tmf8828_interrupt_pin));
-  }
+  // No-op: see setInterruptHandler.
 }
 
 void disableInterrupts(void) {
