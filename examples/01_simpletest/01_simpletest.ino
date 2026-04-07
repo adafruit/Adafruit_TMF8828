@@ -57,14 +57,15 @@ void loop() {
   Serial.print(frame.temperature);
   Serial.println(F("C"));
 
+  // Print grids rotated 90° CCW so sensor orientation matches physical layout
   Serial.println(F("Distance (mm):                          Confidence:"));
-  for (uint8_t row = 0; row < 8; row++) {
+  for (uint8_t col = 7; col < 8; col--) { // unsigned wraps to 255
     Serial.print(F("  "));
-    for (uint8_t col = 0; col < 8; col++) {
+    for (uint8_t row = 0; row < 8; row++) {
       printPadded(frame.distances[row][col], 5);
     }
     Serial.print(F("   "));
-    for (uint8_t col = 0; col < 8; col++) {
+    for (uint8_t row = 0; row < 8; row++) {
       printPadded(frame.confidences[row][col], 4);
     }
     Serial.println();
