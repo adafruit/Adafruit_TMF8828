@@ -47,9 +47,27 @@ void setup() {
 
   if (tmf.getSerialNumber() == 0) {
     halt(F("Serial number missing"));
-  } else {
-    Serial.println(F("PASS"));
   }
+
+  Serial.println(F("First begin() OK"));
+
+  // Call begin() again to verify re-init works without a power cycle.
+  // This simulates what happens when the MCU resets but the sensor stays
+  // powered — the driver must soft-reset back to bootloader and re-upload FW.
+  Serial.println(F("Re-calling begin() (soft reset test)..."));
+  if (!tmf.begin(0x41, &Wire, 400000)) {
+    halt(
+        F("Second begin() FAILED - sensor cannot re-init without power cycle"));
+  }
+
+  if (!tmf.readDeviceInfo()) {
+    halt(F("Second readDeviceInfo FAILED"));
+  }
+
+  Serial.print(F("Serial after re-init: "));
+  Serial.println(tmf.getSerialNumber());
+
+  Serial.println(F("PASS"));
 }
 
 void loop() {}

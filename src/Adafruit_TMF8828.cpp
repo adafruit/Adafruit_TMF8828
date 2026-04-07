@@ -52,10 +52,16 @@ bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire, uint32_t i2cSpeed) {
   configurePins(nullptr);
 
   tmf8828Initialise(&driver);
+  tmf8828SetLogLevel(&driver, TMF8828_LOG_LEVEL_ERROR);
+
+  // Force the sensor back to ROM bootloader even if it is already running
+  // application firmware (e.g. after an MCU reset without power-cycling the
+  // sensor). Write ENABLE register with cpu_reset=1 and PON=1.
+  forceReset();
+
   tmf8828Enable(&driver);
   delayInMicroseconds(ENABLE_TIME_MS * 1000UL);
   tmf8828ClkCorrection(&driver, 1);
-  tmf8828SetLogLevel(&driver, TMF8828_LOG_LEVEL_ERROR);
   tmf8828Wakeup(&driver);
   if (!tmf8828IsCpuReady(&driver, CPU_READY_TIME_MS)) {
     return false;
@@ -69,6 +75,19 @@ bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire, uint32_t i2cSpeed) {
   _is8x8 = true;
   tmf8828_last_result_valid = false;
   return true;
+}
+
+void Adafruit_TMF8828::forceReset() {
+  // Write ENABLE register (0xE0) with cpu_reset (bit 7) and PON (bit 0) set.
+  // This forces the CPU back to ROM bootloader regardless of current state.
+  // Clear powerup_select bits so the chip boots into boot monitor, not RAM app.
+  uint8_t buf[2] = {0xE0, 0x81}; // reg addr, value: cpu_reset | PON
+  _i2c->write(buf, 2);
+  delay(5); // wait for reset to take effect
+  // Clear cpu_reset, keep PON
+  buf[1] = 0x01; // PON only
+  _i2c->write(buf, 2);
+  delay(ENABLE_TIME_MS);
 }
 
 bool Adafruit_TMF8828::downloadFirmware(const uint8_t* image, uint32_t start,

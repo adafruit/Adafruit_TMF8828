@@ -83,6 +83,7 @@ class Adafruit_TMF8828 {
   tmf8828Driver driver; // public for advanced access
 
  private:
+  void forceReset();
   bool downloadFirmware(const uint8_t* image, uint32_t start, int32_t length);
 
   Adafruit_I2CDevice* _i2c;
