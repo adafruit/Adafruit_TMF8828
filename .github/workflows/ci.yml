@@ -1,0 +1,45 @@
+# Arduino Library CI
+#
+# Copyright 2026 Adafruit Industries (Limor 'ladyada' Fried with assistance
+# from Claude Code)
+#
+# MIT License
+
+name: Arduino Library CI
+
+on: [pull_request, push, repository_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
+      with:
+        repository: adafruit/ci-arduino
+        path: ci
+
+    - name: pre-install
+      run: bash ci/actions_install.sh
+
+    - name: clang
+      run: >-
+        python3 ci/run-clang-format.py -e "ci/*" -e "bin/*" -e "tmf8828.c"
+        -e "tmf8828.h" -e "tmf8828_image.c" -e "tmf882x_image.c"
+        -e "tmf882x_calib.c" -e "tmf8828_calib.c" -e "tmf882x_image.h"
+        -e "tmf882x_calib.h" -e "tmf8828_image.h" -e "tmf8828_calib.h"
+        -r .
+
+    - name: test platforms
+      run: python3 ci/build_platform.py esp32 feather_m4_express pico_rp2040 feather_rp2350 feather_esp32s3
+
+    - name: doxygen
+      env:
+        GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
+        PRETTYNAME: "Adafruit TMF8828 Library"
+        PRESERVE_FOLDERS: "webserial"
+      run: bash ci/doxy_gen_and_deploy.sh
