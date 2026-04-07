@@ -28,10 +28,10 @@ jobs:
 
     - name: clang
       run: >-
-        python3 ci/run-clang-format.py -e "ci/*" -e "bin/*" -e "tmf8828.c"
-        -e "tmf8828.h" -e "tmf8828_image.c" -e "tmf882x_image.c"
-        -e "tmf882x_calib.c" -e "tmf8828_calib.c" -e "tmf882x_image.h"
-        -e "tmf882x_calib.h" -e "tmf8828_image.h" -e "tmf8828_calib.h"
+        python3 ci/run-clang-format.py -e "ci/*" -e "bin/*"
+        -e "*/tmf8828.c" -e "*/tmf8828.h"
+        -e "*/tmf8828_image.*" -e "*/tmf8828_calib.*"
+        -e "*/tmf882x_image.*" -e "*/tmf882x_calib.*"
         -r .
 
     - name: test platforms
