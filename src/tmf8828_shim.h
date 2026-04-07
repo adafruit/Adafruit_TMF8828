@@ -18,7 +18,12 @@
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #else
-#include <pgmspace.h>
+#ifndef PROGMEM
+#define PROGMEM
+#endif
+#ifndef pgm_read_byte
+#define pgm_read_byte(addr) (*(const uint8_t*)(addr))
+#endif
 #endif
 
 #if defined(__cplusplus)
