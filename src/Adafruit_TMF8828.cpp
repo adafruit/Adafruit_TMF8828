@@ -197,22 +197,22 @@ bool Adafruit_TMF8828::readFrame(tmf8828_frame_t* frame) {
     memset(&_frame, 0, sizeof(_frame));
   }
 
-  // Each subcapture has 36 results in 4 groups of 9. The LAST entry of each
-  // group (indices 8, 17, 26, 35) is the reference channel. Stripping those
-  // gives 32 real zones: first 16 = object 0, second 16 = object 1.
-  // The 16 zones per subcapture map to specific 8x8 positions via the
-  // official ams-OSRAM remap table (from tmf882x descattering filter).
+  // Each subcapture has 36 results in 4 groups of 9. The first entry of each
+  // group (indices 0, 9, 18, 27) is a reference channel. Stripping those gives
+  // 32 real zones: first 16 = object 0, second 16 = object 1. We use object 0.
+  // The 16 zones per subcapture map to specific 8x8 positions via a
+  // checkerboard-like interleave (from ams-OSRAM TMF8828 zone mapping).
   static const uint8_t PROGMEM zoneMap[4][16] = {
-      {56, 60, 40, 44, 24, 28, 8, 12, 57, 61, 41, 45, 25, 29, 9, 13},
-      {58, 62, 42, 46, 26, 30, 10, 14, 59, 63, 43, 47, 27, 31, 11, 15},
-      {48, 52, 32, 36, 16, 20, 0, 4, 49, 53, 33, 37, 17, 21, 1, 5},
-      {50, 54, 34, 38, 18, 22, 2, 6, 51, 55, 35, 39, 19, 23, 3, 7},
+      {8, 9, 12, 13, 24, 25, 28, 29, 40, 41, 44, 45, 56, 57, 60, 61},
+      {10, 11, 14, 15, 26, 27, 30, 31, 42, 43, 46, 47, 58, 59, 62, 63},
+      {0, 1, 4, 5, 16, 17, 20, 21, 32, 33, 36, 37, 48, 49, 52, 53},
+      {2, 3, 6, 7, 18, 19, 22, 23, 34, 35, 38, 39, 50, 51, 54, 55},
   };
 
   uint8_t zoneIdx = 0;
   for (uint8_t i = 0; i < 36; i++) {
-    if ((i % 9) == 8) {
-      continue; // skip reference channel (last in each group of 9)
+    if ((i % 9) == 0) {
+      continue; // skip reference channel
     }
     if (zoneIdx < 16) {
       uint8_t gridIdx = pgm_read_byte(&zoneMap[sub][zoneIdx]);

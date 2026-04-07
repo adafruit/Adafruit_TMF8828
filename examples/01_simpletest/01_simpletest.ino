@@ -12,9 +12,7 @@
 
 #include <Adafruit_TMF8828.h>
 
-#define TMF8828_EN_PIN 3 // GPIO pin connected to TMF8828 EN, or -1 to skip
-
-Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
+Adafruit_TMF8828 tmf;
 
 static tmf8828_frame_t frame;
 
@@ -57,15 +55,24 @@ void loop() {
   Serial.print(frame.temperature);
   Serial.println(F("C"));
 
-  Serial.println(F("Distance (mm):                          Confidence:"));
+  Serial.println(F("Distance (mm):"));
   for (uint8_t row = 0; row < 8; row++) {
     Serial.print(F("  "));
     for (uint8_t col = 0; col < 8; col++) {
       printPadded(frame.distances[row][col], 5);
+      if (col < 7)
+        Serial.print(F(" "));
     }
-    Serial.print(F("   "));
+    Serial.println();
+  }
+
+  Serial.println(F("Confidence:"));
+  for (uint8_t row = 0; row < 8; row++) {
+    Serial.print(F("  "));
     for (uint8_t col = 0; col < 8; col++) {
-      printPadded(frame.confidences[row][col], 4);
+      printPadded(frame.confidences[row][col], 3);
+      if (col < 7)
+        Serial.print(F(" "));
     }
     Serial.println();
   }
