@@ -11,13 +11,7 @@
 
 #include <Adafruit_TMF8828.h>
 
-#ifdef ESP32
-#define EN_PIN 27
-#else
-#define EN_PIN A0
-#endif
-
-Adafruit_TMF8828 tmf(EN_PIN);
+Adafruit_TMF8828 tmf;
 
 tmf8828_result_t result;
 
@@ -59,7 +53,7 @@ void setup() {
 
   Serial.println(F("Adafruit TMF8828 Legacy 3x3 Test"));
 
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("TMF8828 not found!"));
     while (1) {
       delay(10);

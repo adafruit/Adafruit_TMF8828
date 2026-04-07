@@ -31,7 +31,7 @@ Adafruit_TMF8828::Adafruit_TMF8828(int8_t enPin)
       _intMask(0),
       _dumpHistogram(0) {}
 
-bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire) {
+bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire, uint32_t i2cSpeed) {
   _wire = wire ? wire : &Wire;
 
   if (_i2c) {
@@ -45,6 +45,7 @@ bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire) {
     _i2c = nullptr;
     return false;
   }
+  _i2c->setSpeed(i2cSpeed);
 
   tmf8828_i2c_device = _i2c;
   tmf8828_enable_pin = _enPin;

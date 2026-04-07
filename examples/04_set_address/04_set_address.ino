@@ -29,7 +29,7 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 I2C Address Change"));
   Serial.println(F("Note: address changes are not permanent."));
 
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("TMF8828 not found at 0x41"));
     while (1) {
       delay(10);
@@ -44,7 +44,7 @@ void setup() {
     }
   }
 
-  if (!tmf.begin(0x42)) {
+  if (!tmf.begin(0x42, &Wire, 400000)) {
     Serial.println(F("Could not talk to device at 0x42"));
     while (1) {
       delay(10);
@@ -60,7 +60,7 @@ void setup() {
     }
   }
 
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("Could not talk to device at 0x41"));
     while (1) {
       delay(10);

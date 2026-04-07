@@ -26,13 +26,7 @@
 
 #include <Adafruit_TMF8828.h>
 
-#ifdef ESP32
-#define EN_PIN 27
-#else
-#define EN_PIN A0
-#endif
-
-Adafruit_TMF8828 tmf(EN_PIN);
+Adafruit_TMF8828 tmf;
 
 tmf8828_result_t result;
 
@@ -79,7 +73,7 @@ void setup() {
   Serial.println(F("======================="));
   Serial.println(F("Initializing sensor..."));
 
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("ERROR: Failed to initialize TMF8828 sensor!"));
   }
 

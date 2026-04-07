@@ -11,7 +11,7 @@
 
 #include <Adafruit_TMF8828.h>
 
-#define EN_PIN 27
+#define EN_PIN -1
 
 Adafruit_TMF8828 tmf(EN_PIN);
 
@@ -23,7 +23,7 @@ void setup() {
 
   Serial.println(F("TMF8828 Init Test"));
 
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("Failed to find TMF8828"));
     Serial.println(F("FAIL"));
     while (1) {

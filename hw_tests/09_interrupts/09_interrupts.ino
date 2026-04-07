@@ -11,7 +11,7 @@
 
 #include <Adafruit_TMF8828.h>
 
-#define EN_PIN 27
+#define EN_PIN -1
 #define INT_PIN 14
 
 Adafruit_TMF8828 tmf(EN_PIN);
@@ -59,7 +59,7 @@ void setup() {
 
   Serial.println(F(""));
   Serial.println(F("Step 1: begin + setMode8x8"));
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("begin FAILED"));
     Serial.println(F("FAIL"));
     while (1) {

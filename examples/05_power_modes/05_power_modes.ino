@@ -67,7 +67,7 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 Power Modes Demo"));
   Serial.println(F("Ranging draws tens of mA; standby is low microamps."));
 
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("TMF8828 not found!"));
     while (1) {
       delay(10);

@@ -12,7 +12,7 @@
 #include <Adafruit_TMF8828.h>
 #include <Wire.h>
 
-#define EN_PIN 27
+#define EN_PIN -1
 
 Adafruit_TMF8828 tmf(EN_PIN);
 
@@ -45,7 +45,7 @@ void setup() {
 
   Serial.println(F(""));
   Serial.println(F("Step 1: begin(0x41)"));
-  if (!tmf.begin(0x41)) {
+  if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("begin FAILED"));
     Serial.println(F("FAIL"));
     while (1) {
@@ -195,7 +195,7 @@ void setup() {
   delay(100);
   tmf.enable();
   delay(100);
-  bool step8Ok = tmf.begin(0x41);
+  bool step8Ok = tmf.begin(0x41, &Wire, 400000);
   if (!step8Ok) {
     Serial.println(F("begin FAILED"));
   } else if (!tmf.readDeviceInfo()) {
