@@ -68,15 +68,29 @@ void loop() {
   printGrid(result);
 }
 
+// Print a right-justified number padded to width
+void printPadded(uint16_t val, uint8_t width) {
+  uint16_t tmp = val;
+  uint8_t digits = 1;
+  while (tmp >= 10) {
+    tmp /= 10;
+    digits++;
+  }
+  while (digits < width) {
+    Serial.print(F(" "));
+    digits++;
+  }
+  Serial.print(val);
+}
+
 // Print a 6x6 distance/confidence grid
 void printGrid(const tmf8828_result_t& data) {
-  char buf[12];
   for (uint8_t row = 0; row < 6; row++) {
     for (uint8_t col = 0; col < 6; col++) {
       uint8_t idx = row * 6 + col;
-      snprintf(buf, sizeof(buf), "%4d/%02d", data.results[idx].distance,
-               data.results[idx].confidence);
-      Serial.print(buf);
+      printPadded(data.results[idx].distance, 4);
+      Serial.print(F("/"));
+      printPadded(data.results[idx].confidence, 2);
       if (col < 5)
         Serial.print(F(" "));
     }
