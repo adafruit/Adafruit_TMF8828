@@ -1,8 +1,5 @@
 # Adafruit TMF8828 Library
-
-<!-- @cond -->
 [![Arduino Library CI](https://github.com/adafruit/Adafruit_TMF8828/actions/workflows/ci.yml/badge.svg)](https://github.com/adafruit/Adafruit_TMF8828/actions/workflows/ci.yml)
-<!-- @endcond -->
 
 Arduino library for the ams-OSRAM TMF8828 8x8 multizone direct Time-of-Flight (dToF) sensor. Supports up to 5m range with 3x3, 4x4, or 8x8 zone resolution.
 
