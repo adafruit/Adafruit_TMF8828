@@ -148,6 +148,14 @@ bool Adafruit_TMF8828::setInterruptMask(uint32_t mask) {
                           _dumpHistogram) == APP_SUCCESS_OK;
 }
 
+bool Adafruit_TMF8828::setActiveRange(tmf8828_range_mode_t mode) {
+  return tmf8828SetActiveRange(&driver, (uint8_t)mode) == APP_SUCCESS_OK;
+}
+
+tmf8828_range_mode_t Adafruit_TMF8828::getActiveRange() {
+  return (tmf8828_range_mode_t)tmf8828GetActiveRange(&driver);
+}
+
 bool Adafruit_TMF8828::startRanging() {
   return tmf8828StartMeasurement(&driver) == APP_SUCCESS_OK;
 }
@@ -224,6 +232,9 @@ bool Adafruit_TMF8828::readFrame(tmf8828_frame_t* frame) {
     zoneIdx++;
   }
   _frame.temperature = res.temperature;
+  _frame.ambientLight = res.ambientLight;
+  _frame.photonCount = res.photonCount;
+  _frame.referenceCount = res.referenceCount;
   _subcaptureMask |= (1 << sub);
 
   // Return true only when all 4 subcaptures are collected
@@ -308,6 +319,19 @@ void Adafruit_TMF8828::clearAndEnableInterrupts(uint8_t mask) {
 
 void Adafruit_TMF8828::disableInterrupts(uint8_t mask) {
   tmf8828DisableInterrupts(&driver, mask);
+}
+
+bool Adafruit_TMF8828::getStatus(tmf8828_status_t* status) {
+  if (!status) {
+    return false;
+  }
+  return tmf8828ReadStatus(&driver, &status->appStatus, &status->measureStatus,
+                           &status->algStatus,
+                           &status->calibStatus) == APP_SUCCESS_OK;
+}
+
+bool Adafruit_TMF8828::clearStatus() {
+  return tmf8828ClearStatus(&driver) == APP_SUCCESS_OK;
 }
 
 bool Adafruit_TMF8828::setGPIO0(tmf8828_gpio_mode_t mode,

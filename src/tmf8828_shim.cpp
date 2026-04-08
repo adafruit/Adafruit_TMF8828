@@ -291,6 +291,12 @@ void printResults(void* dptr, uint8_t* data, uint8_t len) {
   tmf8828_last_result.temperature = data[RESULT_REG(TEMPERATURE)];
   tmf8828_last_result.validResults = data[RESULT_REG(NUMBER_VALID_RESULTS)];
   tmf8828_last_result.sysTick = tmf8828GetUint32(data + RESULT_REG(SYS_TICK_0));
+  tmf8828_last_result.ambientLight =
+      tmf8828GetUint32(data + RESULT_REG(AMBIENT_LIGHT_0));
+  tmf8828_last_result.photonCount =
+      tmf8828GetUint32(data + RESULT_REG(PHOTON_COUNT_0));
+  tmf8828_last_result.referenceCount =
+      tmf8828GetUint32(data + RESULT_REG(REFERENCE_COUNT_0));
 
   uint8_t* ptr = data + RESULT_REG(RES_CONFIDENCE_0);
   for (int8_t i = 0; i < PRINT_NUMBER_RESULTS; i++) {

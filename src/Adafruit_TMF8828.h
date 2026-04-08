@@ -25,6 +25,9 @@ typedef struct tmf8828_result_t {
   uint8_t temperature;
   uint8_t validResults;
   uint32_t sysTick;
+  uint32_t ambientLight;   ///< Summed IR ambient light (all channels)
+  uint32_t photonCount;    ///< Summed weight of target peak
+  uint32_t referenceCount; ///< Weight of reference channel peak
   struct {
     uint8_t confidence;
     uint16_t distance; // mm
@@ -41,6 +44,9 @@ typedef struct tmf8828_result_t {
  */
 typedef struct tmf8828_frame_t {
   uint8_t temperature;       ///< Temperature (C) from last subcapture
+  uint32_t ambientLight;     ///< Ambient light from last subcapture
+  uint32_t photonCount;      ///< Photon count from last subcapture
+  uint32_t referenceCount;   ///< Reference count from last subcapture
   uint16_t distances[8][8];  ///< Distance (mm), 8x8 row-major
   uint8_t confidences[8][8]; ///< Confidence, 8x8 row-major
 } tmf8828_frame_t;
@@ -62,6 +68,11 @@ typedef enum {
   TMF8828_SPAD_4X4_NARROW = 13,      ///< 4x4 time-mux, 18x8, 29x39 deg
   TMF8828_SPAD_8X8 = 15,             ///< 8x8 mode (TMF8828 only)
 } tmf8828_spad_map_t;
+
+typedef enum {
+  TMF8828_RANGE_SHORT = 0x6E, ///< Short range, up to 1000mm, enhanced accuracy
+  TMF8828_RANGE_LONG = 0x6F,  ///< Long range, up to 5000mm (default)
+} tmf8828_range_mode_t;
 
 typedef enum {
   TMF8828_GPIO_TRISTATE = 0,
@@ -86,6 +97,13 @@ typedef enum {
   TMF8828_GPIO_PREDELAY_200US = 2,
 } tmf8828_gpio_predelay_t;
 
+typedef struct tmf8828_status_t {
+  uint8_t appStatus;     ///< APPLICATION_STATUS (0x04)
+  uint8_t measureStatus; ///< MEASURE_STATUS (0x05)
+  uint8_t algStatus;     ///< ALGORITHM_STATUS (0x06)
+  uint8_t calibStatus;   ///< CALIBRATION_STATUS (0x07)
+} tmf8828_status_t;
+
 class Adafruit_TMF8828 {
  public:
   Adafruit_TMF8828(int8_t enPin = -1);
@@ -102,6 +120,8 @@ class Adafruit_TMF8828 {
                  uint8_t spadMapId = TMF8828_SPAD_8X8);
   bool setThresholds(uint16_t low, uint16_t high, uint8_t persistence = 0);
   bool setInterruptMask(uint32_t mask);
+  bool setActiveRange(tmf8828_range_mode_t mode);
+  tmf8828_range_mode_t getActiveRange();
 
   // Ranging
   bool startRanging();
@@ -147,6 +167,10 @@ class Adafruit_TMF8828 {
                 tmf8828_gpio_predelay_t preDelay = TMF8828_GPIO_PREDELAY_NONE);
   tmf8828_gpio_mode_t getGPIO0();
   tmf8828_gpio_mode_t getGPIO1();
+
+  // Status
+  bool getStatus(tmf8828_status_t* status);
+  bool clearStatus();
 
   tmf8828Driver driver; // public for advanced access
 

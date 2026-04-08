@@ -92,6 +92,9 @@ extern "C" {
 #define TMF8828_COM_RESULT_NUMBER         0x24
 #define TMF8828_COM_TEMPERATURE           0x25
 #define TMF8828_COM_NUMBER_VALID_RESULTS  0x26
+#define TMF8828_COM_AMBIENT_LIGHT_0       0x28
+#define TMF8828_COM_PHOTON_COUNT_0        0x2C
+#define TMF8828_COM_REFERENCE_COUNT_0     0x30
 #define TMF8828_COM_SYS_TICK_0            0x34      // sys tick is 4 bytes
 
 // each of the result records consist of 3 bytes
@@ -272,6 +275,28 @@ int8_t tmf8828ConfigureGpio( tmf8828Driver * driver, uint8_t gpio0_reg, uint8_t 
 // gpio0_reg/gpio1_reg ... pointers to receive raw register values
 // Function returns APP_SUCCESS_OK if successfully read, else it returns an error APP_ERROR_*
 int8_t tmf8828ReadGpio( tmf8828Driver * driver, uint8_t * gpio0_reg, uint8_t * gpio1_reg );
+
+// Function to set the active range mode (short or long)
+// driver ... pointer to an instance of the tmf8828 driver data structure
+// rangeMode ... register value to write
+// Function returns APP_SUCCESS_OK if successfully written, else it returns an error APP_ERROR_*
+int8_t tmf8828SetActiveRange( tmf8828Driver * driver, uint8_t rangeMode );
+
+// Function to read the active range mode register
+// driver ... pointer to an instance of the tmf8828 driver data structure
+// Function returns the raw register value.
+uint8_t tmf8828GetActiveRange( tmf8828Driver * driver );
+
+// Function to read status registers
+// driver ... pointer to an instance of the tmf8828 driver data structure
+// appStatus/measureStatus/algStatus/calibStatus ... pointers to receive status values
+// Function returns APP_SUCCESS_OK if successfully read, else it returns an error APP_ERROR_*
+int8_t tmf8828ReadStatus( tmf8828Driver * driver, uint8_t * appStatus, uint8_t * measureStatus, uint8_t * algStatus, uint8_t * calibStatus );
+
+// Function to clear status registers
+// driver ... pointer to an instance of the tmf8828 driver data structure
+// Function returns APP_SUCCESS_OK if successfully cleared, else it returns an error APP_ERROR_*
+int8_t tmf8828ClearStatus( tmf8828Driver * driver );
 
 // Function to configure the tmf8828 - convenience function that show how to use the tmf8828LoadConfigPage* 
 // and tmf8828WriteConfigPage functions.

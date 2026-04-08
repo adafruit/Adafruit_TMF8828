@@ -240,9 +240,16 @@
 #define TMF8828_COM_APP_ID__application                     0x3   // measurement application id
 #define TMF8828_COM_APP_ID__bootloader                      0x80  // bootloader application id
 
+#define TMF8828_COM_APP_STATUS                              0x04
+#define TMF8828_COM_MEASURE_STATUS                          0x05
+#define TMF8828_COM_ALG_STATUS                              0x06
+#define TMF8828_COM_CALIB_STATUS                            0x07
+
 #define TMF8828_COM_TMF8828_MODE                            0x10 // mode register is either 0x00 == tmf8820/1 or 0x08 == tmf8828                 
 #define TMF8828_COM_TMF8828_MODE__mode__TMF8821             0    // the device is operating in 3x3/3x6/4x4 (TMF8820/TMF8821) mode       
 #define TMF8828_COM_TMF8828_MODE__mode__TMF8828             8
+
+#define TMF8828_COM_ACTIVE_RANGE                            0x19  // active range mode register
 
 // --------------------------------------------------- bootloader -----------------------------
 
@@ -279,6 +286,7 @@
 
 // application commands
 #define TMF8828_COM_CMD_STAT__cmd_measure                             0x10  // Start a measurement
+#define TMF8828_COM_CMD_STAT__cmd_clear_status                        0x11  // clear all status registers
 #define TMF8828_COM_CMD_STAT__cmd_gpio                                0x12  // Apply GPIO configuration
 #define TMF8828_COM_CMD_STAT__cmd_stop                                0xff  // Stop a measurement
 #define TMF8828_COM_CMD_STAT__cmd_write_config_page                   0x15  // Write the active config page
@@ -893,6 +901,57 @@ int8_t tmf8828ReadGpio ( tmf8828Driver * driver, uint8_t * gpio0_reg, uint8_t * 
       *gpio1_reg = dataBuffer[0];
     }
   }
+  return stat;
+}
+
+// Function to set the active range mode (short or long)
+int8_t tmf8828SetActiveRange ( tmf8828Driver * driver, uint8_t rangeMode )
+{
+  dataBuffer[0] = rangeMode;
+  i2cTxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_ACTIVE_RANGE, 1, dataBuffer );
+  return APP_SUCCESS_OK;
+}
+
+// Function to read the active range mode register
+uint8_t tmf8828GetActiveRange ( tmf8828Driver * driver )
+{
+  i2cRxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_ACTIVE_RANGE, 1, dataBuffer );
+  return dataBuffer[0];
+}
+
+// Function to read status registers
+int8_t tmf8828ReadStatus ( tmf8828Driver * driver, uint8_t * appStatus, uint8_t * measureStatus, uint8_t * algStatus, uint8_t * calibStatus )
+{
+  i2cRxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_APP_STATUS, 1, dataBuffer );
+  if ( appStatus )
+  {
+    *appStatus = dataBuffer[0];
+  }
+  i2cRxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_MEASURE_STATUS, 1, dataBuffer );
+  if ( measureStatus )
+  {
+    *measureStatus = dataBuffer[0];
+  }
+  i2cRxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_ALG_STATUS, 1, dataBuffer );
+  if ( algStatus )
+  {
+    *algStatus = dataBuffer[0];
+  }
+  i2cRxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_CALIB_STATUS, 1, dataBuffer );
+  if ( calibStatus )
+  {
+    *calibStatus = dataBuffer[0];
+  }
+  return APP_SUCCESS_OK;
+}
+
+// Function to clear status registers
+int8_t tmf8828ClearStatus ( tmf8828Driver * driver )
+{
+  int8_t stat;
+  dataBuffer[0] = TMF8828_COM_CMD_STAT__cmd_clear_status;
+  i2cTxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_CMD_STAT, 1, dataBuffer );
+  stat = tmf8828CheckRegister( driver, TMF8828_COM_CMD_STAT, TMF8828_COM_CMD_STAT__stat_ok, 1, APP_CMD_WRITE_CONFIG_TIMEOUT_MS );
   return stat;
 }
 
