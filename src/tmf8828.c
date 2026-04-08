@@ -279,6 +279,7 @@
 
 // application commands
 #define TMF8828_COM_CMD_STAT__cmd_measure                             0x10  // Start a measurement
+#define TMF8828_COM_CMD_STAT__cmd_gpio                                0x12  // Apply GPIO configuration
 #define TMF8828_COM_CMD_STAT__cmd_stop                                0xff  // Stop a measurement
 #define TMF8828_COM_CMD_STAT__cmd_write_config_page                   0x15  // Write the active config page
 #define TMF8828_COM_CMD_STAT__cmd_load_config_page_common             0x16  // Load the common config page
@@ -303,6 +304,8 @@
 #define TMF8X2X_COM_HIST_DUMP                               0x39  // 0 ... all off, 1 ... raw histograms, 2 ... ec histograms
 #define TMF8X2X_COM_I2C_SLAVE_ADDRESS                       0x3b  // register that holds the 7-bit shifted slave address
 #define TMF8X2X_COM_ALG_SETTING_0                           0x35  // register that holds the algorithm settings
+#define TMF8828_COM_GPIO_0                                  0x31  // GPIO_0 configuration register
+#define TMF8828_COM_GPIO_1                                  0x32  // GPIO_1 configuration register
 
 /* show distance results with extended confidence range
    report distances -> 0x04
@@ -850,6 +853,47 @@ int8_t tmf8828LoadConfigPageCommon ( tmf8828Driver * driver )
 int8_t tmf8828LoadConfigPageFactoryCalib ( tmf8828Driver * driver )
 {
   return tmf8828LoadConfigPage( driver, TMF8828_COM_CMD_STAT__cmd_load_config_page_factory_calib );
+}
+
+// Function to configure GPIO_0 and GPIO_1 registers
+int8_t tmf8828ConfigureGpio ( tmf8828Driver * driver, uint8_t gpio0_reg, uint8_t gpio1_reg )
+{
+  int8_t stat = tmf8828LoadConfigPageCommon( driver );
+  if ( stat == APP_SUCCESS_OK )
+  {
+    dataBuffer[0] = gpio0_reg;
+    i2cTxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_GPIO_0, 1, dataBuffer );
+    dataBuffer[0] = gpio1_reg;
+    i2cTxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_GPIO_1, 1, dataBuffer );
+    stat = tmf8828WriteConfigPage( driver );
+    if ( stat == APP_SUCCESS_OK )
+    {
+      dataBuffer[0] = TMF8828_COM_CMD_STAT__cmd_gpio;
+      i2cTxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_CMD_STAT, 1, dataBuffer );
+      stat = tmf8828CheckRegister( driver, TMF8828_COM_CMD_STAT, TMF8828_COM_CMD_STAT__stat_ok, 1, APP_CMD_WRITE_CONFIG_TIMEOUT_MS );
+    }
+  }
+  return stat;
+}
+
+// Function to read GPIO_0 and GPIO_1 registers from config page
+int8_t tmf8828ReadGpio ( tmf8828Driver * driver, uint8_t * gpio0_reg, uint8_t * gpio1_reg )
+{
+  int8_t stat = tmf8828LoadConfigPageCommon( driver );
+  if ( stat == APP_SUCCESS_OK )
+  {
+    i2cRxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_GPIO_0, 1, dataBuffer );
+    if ( gpio0_reg )
+    {
+      *gpio0_reg = dataBuffer[0];
+    }
+    i2cRxReg( driver, driver->i2cSlaveAddress, TMF8828_COM_GPIO_1, 1, dataBuffer );
+    if ( gpio1_reg )
+    {
+      *gpio1_reg = dataBuffer[0];
+    }
+  }
+  return stat;
 }
 
 // function to change the I2C address of the device

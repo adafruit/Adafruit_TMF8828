@@ -63,6 +63,29 @@ typedef enum {
   TMF8828_SPAD_8X8 = 15,             ///< 8x8 mode (TMF8828 only)
 } tmf8828_spad_map_t;
 
+typedef enum {
+  TMF8828_GPIO_TRISTATE = 0,
+  TMF8828_GPIO_INPUT_HIGH = 1,
+  TMF8828_GPIO_INPUT_LOW = 2,
+  TMF8828_GPIO_VCSEL_LOW = 3,
+  TMF8828_GPIO_VCSEL_HIGH = 4,
+  TMF8828_GPIO_OUTPUT_HIGH = 5,
+  TMF8828_GPIO_OUTPUT_LOW = 6,
+} tmf8828_gpio_mode_t;
+
+typedef enum {
+  TMF8828_GPIO_DRIVE_1X = 0,
+  TMF8828_GPIO_DRIVE_2X = 1,
+  TMF8828_GPIO_DRIVE_3X = 2,
+  TMF8828_GPIO_DRIVE_4X = 3,
+} tmf8828_gpio_drive_t;
+
+typedef enum {
+  TMF8828_GPIO_PREDELAY_NONE = 0,
+  TMF8828_GPIO_PREDELAY_100US = 1,
+  TMF8828_GPIO_PREDELAY_200US = 2,
+} tmf8828_gpio_predelay_t;
+
 class Adafruit_TMF8828 {
  public:
   Adafruit_TMF8828(int8_t enPin = -1);
@@ -115,6 +138,16 @@ class Adafruit_TMF8828 {
   void clearAndEnableInterrupts(uint8_t mask);
   void disableInterrupts(uint8_t mask);
 
+  // GPIO
+  bool setGPIO0(tmf8828_gpio_mode_t mode,
+                tmf8828_gpio_drive_t strength = TMF8828_GPIO_DRIVE_1X,
+                tmf8828_gpio_predelay_t preDelay = TMF8828_GPIO_PREDELAY_NONE);
+  bool setGPIO1(tmf8828_gpio_mode_t mode,
+                tmf8828_gpio_drive_t strength = TMF8828_GPIO_DRIVE_1X,
+                tmf8828_gpio_predelay_t preDelay = TMF8828_GPIO_PREDELAY_NONE);
+  tmf8828_gpio_mode_t getGPIO0();
+  tmf8828_gpio_mode_t getGPIO1();
+
   tmf8828Driver driver; // public for advanced access
 
  private:
@@ -139,6 +172,9 @@ class Adafruit_TMF8828 {
   tmf8828_frame_t _frame;
   uint8_t _subcaptureMask; // bits 0-3 track which subcaptures received
   uint8_t _frameCnt;       // zones filled so far (0-64)
+
+  uint8_t _gpio0Reg; // raw register value for GPIO_0
+  uint8_t _gpio1Reg; // raw register value for GPIO_1
 };
 
 #endif

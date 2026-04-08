@@ -29,7 +29,9 @@ Adafruit_TMF8828::Adafruit_TMF8828(int8_t enPin)
       _highThreshold(0),
       _persistence(0),
       _intMask(0),
-      _dumpHistogram(0) {}
+      _dumpHistogram(0),
+      _gpio0Reg(0),
+      _gpio1Reg(0) {}
 
 bool Adafruit_TMF8828::begin(uint8_t addr, TwoWire* wire, uint32_t i2cSpeed) {
   _wire = wire ? wire : &Wire;
@@ -306,4 +308,54 @@ void Adafruit_TMF8828::clearAndEnableInterrupts(uint8_t mask) {
 
 void Adafruit_TMF8828::disableInterrupts(uint8_t mask) {
   tmf8828DisableInterrupts(&driver, mask);
+}
+
+bool Adafruit_TMF8828::setGPIO0(tmf8828_gpio_mode_t mode,
+                                tmf8828_gpio_drive_t strength,
+                                tmf8828_gpio_predelay_t preDelay) {
+  bool vcselMode =
+      (mode == TMF8828_GPIO_VCSEL_LOW || mode == TMF8828_GPIO_VCSEL_HIGH);
+  uint8_t otherMode = _gpio1Reg & 0x07;
+  if (vcselMode && (otherMode == TMF8828_GPIO_VCSEL_LOW ||
+                    otherMode == TMF8828_GPIO_VCSEL_HIGH)) {
+    return false;
+  }
+
+  _gpio0Reg = (uint8_t)((strength << 6) | (preDelay << 3) | (mode & 0x07));
+  return tmf8828ConfigureGpio(&driver, _gpio0Reg, _gpio1Reg) == APP_SUCCESS_OK;
+}
+
+bool Adafruit_TMF8828::setGPIO1(tmf8828_gpio_mode_t mode,
+                                tmf8828_gpio_drive_t strength,
+                                tmf8828_gpio_predelay_t preDelay) {
+  bool vcselMode =
+      (mode == TMF8828_GPIO_VCSEL_LOW || mode == TMF8828_GPIO_VCSEL_HIGH);
+  uint8_t otherMode = _gpio0Reg & 0x07;
+  if (vcselMode && (otherMode == TMF8828_GPIO_VCSEL_LOW ||
+                    otherMode == TMF8828_GPIO_VCSEL_HIGH)) {
+    return false;
+  }
+
+  _gpio1Reg = (uint8_t)((strength << 6) | (preDelay << 3) | (mode & 0x07));
+  return tmf8828ConfigureGpio(&driver, _gpio0Reg, _gpio1Reg) == APP_SUCCESS_OK;
+}
+
+tmf8828_gpio_mode_t Adafruit_TMF8828::getGPIO0() {
+  uint8_t gpio0 = _gpio0Reg;
+  uint8_t gpio1 = _gpio1Reg;
+  if (tmf8828ReadGpio(&driver, &gpio0, &gpio1) == APP_SUCCESS_OK) {
+    _gpio0Reg = gpio0;
+    _gpio1Reg = gpio1;
+  }
+  return (tmf8828_gpio_mode_t)(_gpio0Reg & 0x07);
+}
+
+tmf8828_gpio_mode_t Adafruit_TMF8828::getGPIO1() {
+  uint8_t gpio0 = _gpio0Reg;
+  uint8_t gpio1 = _gpio1Reg;
+  if (tmf8828ReadGpio(&driver, &gpio0, &gpio1) == APP_SUCCESS_OK) {
+    _gpio0Reg = gpio0;
+    _gpio1Reg = gpio1;
+  }
+  return (tmf8828_gpio_mode_t)(_gpio1Reg & 0x07);
 }

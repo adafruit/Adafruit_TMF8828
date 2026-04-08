@@ -261,6 +261,18 @@ int8_t tmf8828LoadConfigPageCommon( tmf8828Driver * driver );
 // Function returns APP_SUCCESS_OK if successfully loaded, else it returns an error APP_ERROR_*
 int8_t tmf8828LoadConfigPageFactoryCalib( tmf8828Driver * driver );
 
+// Function to configure GPIO_0 and GPIO_1 registers
+// driver ... pointer to an instance of the tmf8828 driver data structure
+// gpio0_reg/gpio1_reg ... raw register values for GPIO_0/GPIO_1
+// Function returns APP_SUCCESS_OK if successfully configured, else it returns an error APP_ERROR_*
+int8_t tmf8828ConfigureGpio( tmf8828Driver * driver, uint8_t gpio0_reg, uint8_t gpio1_reg );
+
+// Function to read GPIO_0 and GPIO_1 registers from config page
+// driver ... pointer to an instance of the tmf8828 driver data structure
+// gpio0_reg/gpio1_reg ... pointers to receive raw register values
+// Function returns APP_SUCCESS_OK if successfully read, else it returns an error APP_ERROR_*
+int8_t tmf8828ReadGpio( tmf8828Driver * driver, uint8_t * gpio0_reg, uint8_t * gpio1_reg );
+
 // Function to configure the tmf8828 - convenience function that show how to use the tmf8828LoadConfigPage* 
 // and tmf8828WriteConfigPage functions.
 // driver ... pointer to an instance of the tmf8828 driver data structure
