@@ -12,14 +12,14 @@
 #include <Adafruit_TMF8828.h>
 
 // Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
-#define EN_PIN -1
-#define INT_PIN 14
+#define TMF8828_EN_PIN 3
+#define TMF8828_INT_PIN 2
 
-Adafruit_TMF8828 tmf(EN_PIN);
+Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
 volatile uint32_t interruptCount = 0;
 
-static void IRAM_ATTR handleInterrupt() {
+static void handleInterrupt() {
   interruptCount++;
 }
 
@@ -54,7 +54,7 @@ void setup() {
 
   Serial.println(F("TMF8828 interrupt test"));
 
-  pinMode(INT_PIN, INPUT_PULLUP);
+  pinMode(TMF8828_INT_PIN, INPUT_PULLUP);
 
   bool overall = true;
 
@@ -76,8 +76,8 @@ void setup() {
 
   Serial.println(F(""));
   Serial.println(F("Step 2: INT pin idle state"));
-  int idleState = digitalRead(INT_PIN);
-  Serial.print(F("INT_PIN read="));
+  int idleState = digitalRead(TMF8828_INT_PIN);
+  Serial.print(F("TMF8828_INT_PIN read="));
   Serial.println(idleState == HIGH ? F("HIGH") : F("LOW"));
   bool step2Ok = (idleState == HIGH);
   Serial.println(step2Ok ? F("PASS") : F("FAIL"));
@@ -105,11 +105,12 @@ void setup() {
     step3Ok = false;
   } else {
     Serial.println(F("startRanging PASS"));
-    attachInterrupt(digitalPinToInterrupt(INT_PIN), handleInterrupt, FALLING);
+    attachInterrupt(digitalPinToInterrupt(TMF8828_INT_PIN), handleInterrupt,
+                    FALLING);
     waitForInterrupts(5000);
     tmf.stopRanging();
     Serial.println(F("stopRanging PASS"));
-    detachInterrupt(digitalPinToInterrupt(INT_PIN));
+    detachInterrupt(digitalPinToInterrupt(TMF8828_INT_PIN));
   }
 
   uint32_t step3Count = readInterruptCount();
@@ -160,7 +161,8 @@ void setup() {
   bool step5Ok = true;
   tmf.disableInterrupts(TMF8828_APP_I2C_RESULT_IRQ_MASK);
   resetInterruptCount();
-  attachInterrupt(digitalPinToInterrupt(INT_PIN), handleInterrupt, FALLING);
+  attachInterrupt(digitalPinToInterrupt(TMF8828_INT_PIN), handleInterrupt,
+                  FALLING);
   if (!tmf.startRanging()) {
     Serial.println(F("startRanging FAILED"));
     step5Ok = false;
@@ -170,7 +172,7 @@ void setup() {
     tmf.stopRanging();
     Serial.println(F("stopRanging PASS"));
   }
-  detachInterrupt(digitalPinToInterrupt(INT_PIN));
+  detachInterrupt(digitalPinToInterrupt(TMF8828_INT_PIN));
 
   uint32_t step5Count = readInterruptCount();
   Serial.print(F("Interrupt count="));
@@ -188,7 +190,8 @@ void setup() {
   bool step6Ok = true;
   tmf.clearAndEnableInterrupts(TMF8828_APP_I2C_RESULT_IRQ_MASK);
   resetInterruptCount();
-  attachInterrupt(digitalPinToInterrupt(INT_PIN), handleInterrupt, FALLING);
+  attachInterrupt(digitalPinToInterrupt(TMF8828_INT_PIN), handleInterrupt,
+                  FALLING);
   if (!tmf.startRanging()) {
     Serial.println(F("startRanging FAILED"));
     step6Ok = false;
@@ -198,7 +201,7 @@ void setup() {
     tmf.stopRanging();
     Serial.println(F("stopRanging PASS"));
   }
-  detachInterrupt(digitalPinToInterrupt(INT_PIN));
+  detachInterrupt(digitalPinToInterrupt(TMF8828_INT_PIN));
 
   uint32_t step6Count = readInterruptCount();
   Serial.print(F("Interrupt count="));

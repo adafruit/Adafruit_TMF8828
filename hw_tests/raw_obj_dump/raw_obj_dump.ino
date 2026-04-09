@@ -17,27 +17,33 @@ void setup() {
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
     Serial.println(F("FAIL"));
-    while (1) delay(10);
+    while (1)
+      delay(10);
   }
   if (!tmf.setMode8x8()) {
     Serial.println(F("FAIL"));
-    while (1) delay(10);
+    while (1)
+      delay(10);
   }
   if (!tmf.configure(132, 250, TMF8828_SPAD_8X8)) {
     Serial.println(F("FAIL"));
-    while (1) delay(10);
+    while (1)
+      delay(10);
   }
   if (!tmf.startRanging()) {
     Serial.println(F("FAIL"));
-    while (1) delay(10);
+    while (1)
+      delay(10);
   }
 }
 
 void loop() {
-  if (!tmf.dataReady()) return;
+  if (!tmf.dataReady())
+    return;
 
   tmf8828_result_t res;
-  if (!tmf.getRangingData(&res)) return;
+  if (!tmf.getRangingData(&res))
+    return;
 
   // Print in ams #Obj format:
   // #Obj,addr,result_number,temp,valid_results,systick,dist0,conf0,dist1,conf1,...

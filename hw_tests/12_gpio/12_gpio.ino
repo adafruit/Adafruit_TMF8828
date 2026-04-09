@@ -12,7 +12,7 @@
 #include <Adafruit_TMF8828.h>
 
 // Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
-#define TMF8828_EN_PIN -1
+#define TMF8828_EN_PIN 3
 #define GPIO0_PIN 4
 #define GPIO1_PIN 5
 

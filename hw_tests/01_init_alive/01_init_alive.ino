@@ -12,9 +12,9 @@
 #include <Adafruit_TMF8828.h>
 
 // Set to a GPIO pin to hardware-reset the sensor before init, or -1 to skip
-#define EN_PIN -1
+#define TMF8828_EN_PIN 3
 
-Adafruit_TMF8828 tmf(EN_PIN);
+Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
 void setup() {
   Serial.begin(115200);
