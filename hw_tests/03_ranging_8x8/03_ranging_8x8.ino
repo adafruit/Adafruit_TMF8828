@@ -16,6 +16,7 @@
 
 Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
+// Single result buffer — no arrays (AVR RAM is tight)
 tmf8828_result_t result;
 
 static bool waitForResult(uint32_t timeoutMs) {
@@ -31,42 +32,6 @@ static bool waitForResult(uint32_t timeoutMs) {
   return false;
 }
 
-static void printPaddedDistance(uint16_t distance) {
-  if (distance < 10) {
-    Serial.print(F("   "));
-  } else if (distance < 100) {
-    Serial.print(F("  "));
-  } else if (distance < 1000) {
-    Serial.print(F(" "));
-  }
-  Serial.print(distance);
-}
-
-static void printZones(const tmf8828_result_t& data) {
-  for (uint8_t i = 0; i < 36; i++) {
-    Serial.print(F("Zone "));
-    Serial.print(i);
-    Serial.print(F(": "));
-    Serial.print(data.results[i].distance);
-    Serial.print(F(" mm  Conf="));
-    Serial.println(data.results[i].confidence);
-  }
-}
-
-static void printGrid(const tmf8828_result_t& data) {
-  for (uint8_t row = 0; row < 6; row++) {
-    Serial.print(F("  "));
-    for (uint8_t col = 0; col < 6; col++) {
-      uint8_t idx = row * 6 + col;
-      printPaddedDistance(data.results[idx].distance);
-      if (col < 5) {
-        Serial.print(F(" "));
-      }
-    }
-    Serial.println();
-  }
-}
-
 void setup() {
   Serial.begin(115200);
   while (!Serial) {
@@ -77,7 +42,6 @@ void setup() {
 
   bool overall = true;
 
-  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("begin FAILED"));
   }
@@ -108,9 +72,6 @@ void setup() {
   bool zoneHasHit = false;
   uint32_t lastSysTick = 0;
 
-  tmf8828_result_t captures[4];
-  bool haveCapture[4] = {false, false, false, false};
-
   for (uint8_t frame = 0; frame < frames; frame++) {
     if (!waitForResult(5000)) {
       Serial.println(F("Timeout waiting for data"));
@@ -118,28 +79,21 @@ void setup() {
       break;
     }
 
-    Serial.println(F(""));
-    Serial.print(F("Frame "));
-    Serial.println(frame);
-
     uint8_t subcapture = result.resultNumber & 0x03;
-
-    Serial.print(F("ResultNumber="));
-    Serial.print(result.resultNumber);
-    Serial.print(F(" Subcapture="));
-    Serial.print(subcapture);
-    Serial.print(F(" ValidResults="));
-    Serial.print(result.validResults);
-    Serial.print(F(" Temp="));
-    Serial.print(result.temperature);
-    Serial.print(F(" SysTick="));
-    Serial.println(result.sysTick);
-
     seenResult[subcapture] = true;
-    if (!haveCapture[subcapture]) {
-      captures[subcapture] = result;
-      haveCapture[subcapture] = true;
-    }
+
+    Serial.print(F("Frame "));
+    Serial.print(frame);
+    Serial.print(F(" RN="));
+    Serial.print(result.resultNumber);
+    Serial.print(F(" Sub="));
+    Serial.print(subcapture);
+    Serial.print(F(" Valid="));
+    Serial.print(result.validResults);
+    Serial.print(F(" T="));
+    Serial.print(result.temperature);
+    Serial.print(F(" Tick="));
+    Serial.println(result.sysTick);
 
     if (result.validResults == 0) {
       validNonZero = false;
@@ -160,8 +114,6 @@ void setup() {
         zoneHasHit = true;
       }
     }
-
-    printZones(result);
   }
 
   tmf.stopRanging();
@@ -205,31 +157,10 @@ void setup() {
     overall = false;
   }
 
-  bool haveAllCaptures =
-      haveCapture[0] && haveCapture[1] && haveCapture[2] && haveCapture[3];
-
-  if (haveAllCaptures) {
-    Serial.println(F("subcapture set PASS"));
-  } else {
-    Serial.println(F("subcapture set FAIL"));
-    overall = false;
-  }
-
-  if (haveAllCaptures) {
-    Serial.println(F(""));
-    Serial.println(F("Subcapture Distance Grids (6x6 each)"));
-    for (uint8_t idx = 0; idx < 4; idx++) {
-      Serial.print(F("Subcapture "));
-      Serial.println(idx);
-      printGrid(captures[idx]);
-      Serial.println();
-    }
-  }
-
   if (overall) {
-    Serial.println(F("PASS"));
+    Serial.println(F("\nPASS"));
   } else {
-    Serial.println(F("FAIL"));
+    Serial.println(F("\nFAIL"));
   }
 }
 
