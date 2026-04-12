@@ -35,22 +35,25 @@ void setup() {
     halt(F("Failed to change address"));
   }
 
-  if (!tmf.begin(0x42, &Wire, 400000)) {
+  // Verify we can talk at the new address (don't call begin — that resets the
+  // sensor which reverts the volatile address change)
+  if (!tmf.readDeviceInfo()) {
     halt(F("Could not talk to device at 0x42"));
   }
-  Serial.println(F("Verified address 0x42"));
+  Serial.print(F("Verified address 0x42, serial=0x"));
+  Serial.println(tmf.getSerialNumber(), HEX);
 
   Serial.println(F("Changing address back to 0x41..."));
   if (!tmf.changeI2CAddress(0x41)) {
     halt(F("Failed to change address back"));
   }
 
-  // Args: I2C address, Wire bus, I2C speed (Hz)
-  if (!tmf.begin(0x41, &Wire, 400000)) {
+  if (!tmf.readDeviceInfo()) {
     halt(F("Could not talk to device at 0x41"));
   }
-  Serial.println(F("Verified address 0x41"));
-  Serial.println(F("Done! Power cycle to reset the address."));
+  Serial.print(F("Verified address 0x41, serial=0x"));
+  Serial.println(tmf.getSerialNumber(), HEX);
+  Serial.println(F("Done! Power cycle also resets the address."));
 }
 
 void loop() {
