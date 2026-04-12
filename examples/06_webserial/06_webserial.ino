@@ -3,21 +3,19 @@
  *
  * Web Serial demo for the Adafruit TMF8828 8x8 ToF sensor.
  *
- * Outputs structured data for the WebSerial visualization page.
- * Accepts serial commands to change mode, ranging period, and
- * kilo-iterations.
+ * Outputs assembled 8x8 frames for the WebSerial visualization page.
+ * Accepts serial commands to change ranging period and kilo-iterations.
  *
- * Output format (one sub-capture per block):
+ * Output format (one complete 8x8 frame per block):
  *   FRAME_START
- *   MODE:8x8
- *   SUB:0
  *   TEMP:22
- *   D:123,456,789,...  (comma-separated distance_mm values)
- *   C:12,34,56,...     (comma-separated confidence values)
+ *   R0:123,456,789,0,0,123,456,789   (8 distances for row 0)
+ *   R1:...                            (row 1, etc.)
+ *   ...
+ *   R7:...
  *   FRAME_END
  *
  * Commands:
- *   MODE:8X8 or MODE:LEGACY — switch modes
  *   PERIOD:100 through PERIOD:1000 — set ranging period in ms
  *   KITER:50 through KITER:1000 — set kilo-iterations
  *
@@ -30,32 +28,20 @@
 
 Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
-tmf8828_result_t result;
+tmf8828_frame_t frame;
 
 String inputBuffer = "";
 
-bool currentMode8x8 = true;
 uint16_t currentPeriod = 132;
 uint16_t currentKiter = 250;
-const uint8_t legacySpadMap = 6;
-const uint8_t mode8x8SpadMap = 15;
 
 static bool applyConfig(void) {
-  if (!tmf.stopRanging()) {
+  tmf.stopRanging();
+  if (!tmf.configure(currentPeriod, currentKiter, TMF8828_SPAD_8X8)) {
     return false;
   }
-
-  bool ok = true;
-  if (currentMode8x8) {
-    ok &= tmf.setMode8x8();
-    ok &= tmf.configure(currentPeriod, currentKiter, mode8x8SpadMap);
-  } else {
-    ok &= tmf.setModeLegacy();
-    ok &= tmf.configure(currentPeriod, currentKiter, legacySpadMap);
-  }
-
-  ok &= tmf.startRanging();
-  return ok;
+  tmf.clearAndEnableInterrupts(TMF8828_APP_I2C_RESULT_IRQ_MASK);
+  return tmf.startRanging();
 }
 
 void setup() {
@@ -65,43 +51,43 @@ void setup() {
   }
 
   Serial.println(F("TMF8828 WebSerial Demo"));
-  Serial.println(F("======================="));
-  Serial.println(F("Initializing sensor..."));
 
-  // Args: I2C address, Wire bus, I2C speed (Hz)
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("ERROR: Failed to initialize TMF8828 sensor!"));
+  }
+
+  if (!tmf.setMode8x8()) {
+    halt(F("ERROR: Failed to set 8x8 mode!"));
   }
 
   if (!applyConfig()) {
     halt(F("ERROR: Failed to configure sensor!"));
   }
 
-  Serial.print(F("Mode: "));
-  Serial.println(currentMode8x8 ? F("8x8") : F("LEGACY"));
   Serial.print(F("Period: "));
   Serial.print(currentPeriod);
   Serial.println(F(" ms"));
   Serial.print(F("Kiter: "));
   Serial.println(currentKiter);
+  // Flush any garbage in the RX buffer from upload/reset
+  while (Serial.available()) {
+    Serial.read();
+  }
+
   Serial.println(F("READY"));
 }
 
 void loop() {
   processSerialInput();
 
-  if (tmf.dataReady()) {
-    if (tmf.getRangingData(&result)) {
-      outputFrame();
-    }
+  // readFrame() collects 4 subcaptures and assembles the 8x8 grid
+  if (tmf.readFrame(&frame)) {
+    outputFrame();
   }
 
-  delay(5);
+  delay(1);
 }
 
-/**************************************************************************/
-/*! @brief  Process incoming serial commands */
-/**************************************************************************/
 void processSerialInput(void) {
   while (Serial.available()) {
     char c = Serial.read();
@@ -116,34 +102,11 @@ void processSerialInput(void) {
   }
 }
 
-/**************************************************************************/
-/*! @brief  Handle a parsed command string */
-/**************************************************************************/
 void handleCommand(String cmd) {
   cmd.trim();
   cmd.toUpperCase();
 
-  if (cmd.startsWith(F("MODE:"))) {
-    String mode = cmd.substring(5);
-    mode.trim();
-    if (mode == F("8X8")) {
-      currentMode8x8 = true;
-      if (applyConfig()) {
-        Serial.println(F("OK MODE:8X8"));
-      } else {
-        Serial.println(F("ERROR: Failed to set mode"));
-      }
-    } else if (mode == F("LEGACY")) {
-      currentMode8x8 = false;
-      if (applyConfig()) {
-        Serial.println(F("OK MODE:LEGACY"));
-      } else {
-        Serial.println(F("ERROR: Failed to set mode"));
-      }
-    } else {
-      Serial.println(F("ERROR: Mode must be 8X8 or LEGACY"));
-    }
-  } else if (cmd.startsWith(F("PERIOD:"))) {
+  if (cmd.startsWith(F("PERIOD:"))) {
     uint16_t period = (uint16_t)cmd.substring(7).toInt();
     if (period >= 100 && period <= 1000) {
       currentPeriod = period;
@@ -175,40 +138,34 @@ void handleCommand(String cmd) {
   }
 }
 
-/**************************************************************************/
-/*! @brief  Output a single sub-capture frame */
-/**************************************************************************/
 void outputFrame(void) {
-  uint8_t subcapture = result.resultNumber & 0x03;
-
   Serial.println(F("FRAME_START"));
-  Serial.print(F("MODE:"));
-  Serial.println(currentMode8x8 ? F("8x8") : F("LEGACY"));
-  Serial.print(F("SUB:"));
-  Serial.println(subcapture);
   Serial.print(F("TEMP:"));
-  Serial.println(result.temperature);
+  Serial.println(frame.temperature);
 
-  Serial.print(F("D:"));
-  for (uint8_t i = 0; i < 36; i++) {
-    if (i) {
-      Serial.print(F(","));
+  for (uint8_t row = 0; row < 8; row++) {
+    Serial.print(F("R"));
+    Serial.print(row);
+    Serial.print(F(":"));
+    for (uint8_t col = 0; col < 8; col++) {
+      if (col) {
+        Serial.print(F(","));
+      }
+      Serial.print(frame.distances[row][col]);
     }
-    Serial.print(result.results[i].distance);
-  }
-  Serial.println();
-
-  Serial.print(F("C:"));
-  for (uint8_t i = 0; i < 36; i++) {
-    if (i) {
-      Serial.print(F(","));
+    Serial.print(F("|"));
+    for (uint8_t col = 0; col < 8; col++) {
+      if (col) {
+        Serial.print(F(","));
+      }
+      Serial.print(frame.confidences[row][col]);
     }
-    Serial.print(result.results[i].confidence);
+    Serial.println();
   }
-  Serial.println();
 
   Serial.println(F("FRAME_END"));
 }
+
 void halt(const __FlashStringHelper* msg) {
   Serial.println(msg);
   Serial.println(F("FAIL"));
