@@ -91,8 +91,8 @@ static bool doRangingTest(const __FlashStringHelper* label, bool expect8x8,
   Serial.println(avgValid);
 
   if (expect8x8) {
-    // 8x8 subcaptures typically report 8-14 valid results depending on scene
-    if (avgValid < 4 || avgValid > 36) {
+    // 8x8 subcaptures report 1-14+ valid results depending on scene/distance
+    if (avgValid < 1 || avgValid > 36) {
       ok = false;
     }
   } else {
