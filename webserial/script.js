@@ -37,8 +37,15 @@ const distanceGrid = document.getElementById('distance-grid');
 const serialLog = document.getElementById('serial-log');
 const logToggle = document.getElementById('log-toggle');
 
-const rowOffset = [0, 0, 2, 2];
-const colOffset = [0, 2, 0, 2];
+// Official ams-OSRAM remap table — maps 16 real zones per subcapture to 8x8
+// grid positions. Each subcapture has 36 results; indices 8,17,26,35 are
+// reference channels (skipped), leaving 32 values. First 16 = object 0.
+const ZONE_MAP = [
+  [56, 60, 40, 44, 24, 28, 8, 12, 57, 61, 41, 45, 25, 29, 9, 13],
+  [58, 62, 42, 46, 26, 30, 10, 14, 59, 63, 43, 47, 27, 31, 11, 15],
+  [48, 52, 32, 36, 16, 20, 0, 4, 49, 53, 33, 37, 17, 21, 1, 5],
+  [50, 54, 34, 38, 18, 22, 2, 6, 51, 55, 35, 39, 19, 23, 3, 7],
+];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -277,26 +284,20 @@ function compositeSubcaptures() {
   const compositeConfidences = new Array(64).fill(0);
 
   for (let s = 0; s < 4; s++) {
-    const ro = rowOffset[s];
-    const co = colOffset[s];
-    const distances = subcaptures[s].distances;
-    const confidences = subcaptures[s].confidences;
+    const raw = subcaptures[s].distances;
+    const rawConf = subcaptures[s].confidences;
+    const map = ZONE_MAP[s];
 
-    for (let row = 0; row < 6; row++) {
-      for (let col = 0; col < 6; col++) {
-        const idx6 = row * 6 + col;
-        const r = row + ro;
-        const c = col + co;
-        if (r >= 8 || c >= 8) {
-          continue;
-        }
-        const idx8 = r * 8 + c;
-        const conf = confidences[idx6] || 0;
-        if (conf >= (compositeConfidences[idx8] || 0)) {
-          compositeConfidences[idx8] = conf;
-          compositeDistances[idx8] = distances[idx6] || 0;
-        }
+    // Strip reference channels (indices 8, 17, 26, 35) to get 32 real zones
+    let zoneIdx = 0;
+    for (let i = 0; i < 36; i++) {
+      if ((i % 9) === 8) continue; // skip reference channel
+      if (zoneIdx < 16) {
+        const gridIdx = map[zoneIdx];
+        compositeDistances[gridIdx] = raw[i] || 0;
+        compositeConfidences[gridIdx] = rawConf[i] || 0;
       }
+      zoneIdx++;
     }
   }
 
