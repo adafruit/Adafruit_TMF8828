@@ -14,6 +14,9 @@
 
 #define TMF8828_EN_PIN 3 // GPIO pin connected to TMF8828 EN, or -1 to skip
 
+#define DEFAULT_ADDR 0x41
+#define ALT_ADDR 0x42
+
 Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
 void setup() {
@@ -25,33 +28,44 @@ void setup() {
   Serial.println(F("Adafruit TMF8828 I2C Address Change"));
   Serial.println(F("Note: address changes are not permanent."));
 
-  // Args: I2C address, Wire bus, I2C speed (Hz)
-  if (!tmf.begin(0x41, &Wire, 400000)) {
-    halt(F("TMF8828 not found at 0x41"));
+  // Try default address first; if that fails, toggle EN to power-cycle the
+  // sensor (a CPU reset reverts volatile address changes, but only works if
+  // we can reach the sensor on I2C — EN toggle always works)
+  if (!tmf.begin(DEFAULT_ADDR, &Wire, 400000)) {
+    Serial.println(F("Not at 0x41 — toggling EN to power-cycle sensor..."));
+    pinMode(TMF8828_EN_PIN, OUTPUT);
+    digitalWrite(TMF8828_EN_PIN, LOW);
+    delay(100);
+    digitalWrite(TMF8828_EN_PIN, HIGH);
+    delay(100);
+    if (!tmf.begin(DEFAULT_ADDR, &Wire, 400000)) {
+      halt(F("TMF8828 not found after EN power-cycle"));
+    }
   }
+  Serial.println(F("Found TMF8828 at 0x41"));
 
   Serial.println(F("Changing address to 0x42..."));
-  if (!tmf.changeI2CAddress(0x42)) {
+  if (!tmf.changeI2CAddress(ALT_ADDR)) {
     halt(F("Failed to change address"));
   }
 
-  // Verify we can talk at the new address (don't call begin — that resets the
-  // sensor which reverts the volatile address change)
+  // Verify at new address (don't call begin — that resets the CPU which
+  // reverts the volatile address change)
   if (!tmf.readDeviceInfo()) {
-    halt(F("Could not talk to device at 0x42"));
+    halt(F("Could not verify at 0x42"));
   }
-  Serial.print(F("Verified address 0x42, serial=0x"));
+  Serial.print(F("Verified at 0x42, serial=0x"));
   Serial.println(tmf.getSerialNumber(), HEX);
 
   Serial.println(F("Changing address back to 0x41..."));
-  if (!tmf.changeI2CAddress(0x41)) {
+  if (!tmf.changeI2CAddress(DEFAULT_ADDR)) {
     halt(F("Failed to change address back"));
   }
 
   if (!tmf.readDeviceInfo()) {
-    halt(F("Could not talk to device at 0x41"));
+    halt(F("Could not verify at 0x41"));
   }
-  Serial.print(F("Verified address 0x41, serial=0x"));
+  Serial.print(F("Verified at 0x41, serial=0x"));
   Serial.println(tmf.getSerialNumber(), HEX);
   Serial.println(F("Done! Power cycle also resets the address."));
 }
