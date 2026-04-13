@@ -17,7 +17,7 @@
 
 #include <Adafruit_TMF8828.h>
 
-#define TMF8828_EN_PIN -1 // GPIO pin connected to TMF8828 EN, or -1 to skip
+#define TMF8828_EN_PIN 3 // GPIO pin connected to TMF8828 EN, or -1 to skip
 #define GPIO0_PIN 4       // MCU pin wired to TMF8828 GPIO0
 #define GPIO1_PIN 5       // MCU pin wired to TMF8828 GPIO1
 
