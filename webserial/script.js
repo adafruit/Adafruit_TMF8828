@@ -170,6 +170,8 @@ function parseLine(line) {
     frameTemp = parseInt(line.substring(5), 10) || 0;
   } else if (line.startsWith('R') && line.indexOf(':') > 0) {
     // Format: R0:d,d,d,d,d,d,d,d|c,c,c,c,c,c,c,c
+    // Sensor data arrives rotated 90° CW — we rotate CCW here:
+    // source (row, col) -> display (col, 7-row)
     const rowNum = parseInt(line.substring(1, line.indexOf(':')), 10);
     if (rowNum < 0 || rowNum > 7) return;
     const payload = line.substring(line.indexOf(':') + 1);
@@ -178,7 +180,8 @@ function parseLine(line) {
     const confs = parts.length > 1 ? parts[1].split(',').map(v => parseInt(v, 10)) : [];
 
     for (let col = 0; col < 8; col++) {
-      const idx = rowNum * 8 + col;
+      // Rotate 90° CCW: display row = col, display col = 7 - rowNum
+      const idx = col * 8 + (7 - rowNum);
       frameDistances[idx] = dists[col] || 0;
       frameConfidences[idx] = confs[col] || 0;
     }
