@@ -3,6 +3,7 @@
  *
  * Simple test for Adafruit TMF8828 Time-of-Flight sensor.
  * Prints a complete 8x8 distance and confidence grid.
+ * GPIO0 outputs VCSEL sync (high while laser is firing).
  *
  * Written by Limor 'ladyada' Fried with assistance from Claude Code
  * Copyright 2026 Adafruit Industries
@@ -38,6 +39,15 @@ void setup() {
   // Args: period (ms), kilo-iterations (integration time), SPAD map
   if (!tmf.configure(132, 250, TMF8828_SPAD_8X8)) {
     halt(F("Failed to configure sensor"));
+  }
+
+  // Enable VCSEL sync output on GPIO0 — goes high while the laser fires.
+  // This doesn't affect ranging; useful for triggering a scope or syncing
+  // an external illuminator.
+  if (!tmf.setGPIO0(TMF8828_GPIO_VCSEL_HIGH)) {
+    Serial.println(F("Warning: could not set GPIO0 VCSEL sync"));
+  } else {
+    Serial.println(F("GPIO0 = VCSEL sync (high while firing)"));
   }
 
   if (!tmf.startRanging()) {

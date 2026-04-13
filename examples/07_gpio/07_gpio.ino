@@ -1,7 +1,13 @@
 /*!
  * @file 07_gpio.ino
  *
- * Simple GPIO demo for Adafruit TMF8828 Time-of-Flight sensor.
+ * GPIO demo for Adafruit TMF8828 Time-of-Flight sensor.
+ * GPIO0 reads a button (active-low with internal pull-up).
+ * GPIO1 blinks an LED continuously.
+ *
+ * Wiring:
+ *   GPIO0 -> button to GND (no external pull-up needed)
+ *   GPIO1 -> LED anode (with current-limiting resistor to GND)
  *
  * Written by Limor 'ladyada' Fried with assistance from Claude Code
  * Copyright 2026 Adafruit Industries
@@ -12,8 +18,8 @@
 #include <Adafruit_TMF8828.h>
 
 #define TMF8828_EN_PIN -1 // GPIO pin connected to TMF8828 EN, or -1 to skip
-#define GPIO0_PIN 4
-#define GPIO1_PIN 5
+#define GPIO0_PIN 4       // MCU pin wired to TMF8828 GPIO0
+#define GPIO1_PIN 5       // MCU pin wired to TMF8828 GPIO1
 
 Adafruit_TMF8828 tmf(TMF8828_EN_PIN);
 
@@ -24,9 +30,8 @@ void setup() {
   }
 
   Serial.println(F("Adafruit TMF8828 GPIO Demo"));
-
-  pinMode(GPIO0_PIN, INPUT);
-  pinMode(GPIO1_PIN, INPUT);
+  Serial.println(F("GPIO0 = button input (active-low)"));
+  Serial.println(F("GPIO1 = LED blink output"));
 
   if (!tmf.begin(0x41, &Wire, 400000)) {
     halt(F("TMF8828 not found!"));
@@ -36,50 +41,35 @@ void setup() {
     halt(F("Failed to set 8x8 mode"));
   }
 
-  if (!tmf.configure(132, 250, TMF8828_SPAD_8X8)) {
-    halt(F("Failed to configure sensor"));
+  // GPIO0: input with pull-up (reads HIGH when open, LOW when button pressed)
+  if (!tmf.setGPIO0(TMF8828_GPIO_INPUT_HIGH)) {
+    halt(F("Failed to set GPIO0 input"));
+  }
+  pinMode(GPIO0_PIN, INPUT);
+
+  // GPIO1: start with output high (LED on)
+  if (!tmf.setGPIO1(TMF8828_GPIO_OUTPUT_HIGH)) {
+    halt(F("Failed to set GPIO1 output"));
   }
 
-  Serial.println(F(""));
-  Serial.println(F("Demo 1: Toggle GPIO0"));
-  for (uint8_t i = 0; i < 5; i++) {
-    tmf.setGPIO0(TMF8828_GPIO_OUTPUT_HIGH);
-    delay(500);
-    Serial.print(F("GPIO0 set HIGH, read="));
-    Serial.println(digitalRead(GPIO0_PIN) == HIGH ? F("HIGH") : F("LOW"));
-
-    tmf.setGPIO0(TMF8828_GPIO_OUTPUT_LOW);
-    delay(500);
-    Serial.print(F("GPIO0 set LOW, read="));
-    Serial.println(digitalRead(GPIO0_PIN) == HIGH ? F("HIGH") : F("LOW"));
-  }
-
-  Serial.println(F(""));
-  Serial.println(F("Demo 2: GPIO1 VCSEL sync"));
-  if (!tmf.setGPIO1(TMF8828_GPIO_VCSEL_HIGH)) {
-    halt(F("Failed to set GPIO1 VCSEL_HIGH"));
-  }
-  if (!tmf.startRanging()) {
-    halt(F("Failed to start ranging"));
-  }
-
-  uint32_t start = millis();
-  while ((millis() - start) < 3000) {
-    Serial.print(F("GPIO1 read="));
-    Serial.println(digitalRead(GPIO1_PIN) == HIGH ? F("HIGH") : F("LOW"));
-    delay(100);
-  }
-  tmf.stopRanging();
-
-  Serial.println(F(""));
-  Serial.println(F("Demo 3: Getter readback"));
-  tmf.setGPIO0(TMF8828_GPIO_OUTPUT_HIGH);
-  tmf8828_gpio_mode_t mode = tmf.getGPIO0();
-  Serial.print(F("getGPIO0="));
-  Serial.println((int)mode);
+  Serial.println(F("Ready! Press button on GPIO0, watch LED on GPIO1."));
 }
 
-void loop() {}
+void loop() {
+  // Read button on GPIO0
+  int buttonState = digitalRead(GPIO0_PIN);
+  Serial.print(F("Button: "));
+  Serial.print(buttonState == LOW ? F("PRESSED") : F("released"));
+
+  // Blink LED on GPIO1
+  static bool ledOn = true;
+  ledOn = !ledOn;
+  tmf.setGPIO1(ledOn ? TMF8828_GPIO_OUTPUT_HIGH : TMF8828_GPIO_OUTPUT_LOW);
+  Serial.print(F("  LED: "));
+  Serial.println(ledOn ? F("ON") : F("OFF"));
+
+  delay(500);
+}
 
 void halt(const __FlashStringHelper* msg) {
   Serial.println(msg);
